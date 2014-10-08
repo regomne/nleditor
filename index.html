@@ -1,0 +1,30 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello World!</title>
+    <script src="./jquery-2.1.1.js"></script>
+    <script src="./list.js"></script>
+    <!--<script src="./uiproc.js"></script>-->
+    <script src="./backend.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="./all.css" />
+  </head>
+  <body>
+    	<img id="bkgnd" src="./bkgnd.jpg" />
+    	<div class="lines">
+    		
+    	</div>
+    
+    <script type="text/javascript">
+    	var ls1=['abc','呵呵','wocao','测试测试'];
+    	var ls2=['abc</div><div>he','呵呵2','wocal','擦你妹'];
+    	for(var i=0;i<100;i++)
+    	{
+    		ls1.push(ls1[((i*9)%7)&3]);
+    		ls2.push(ls2[((i*13)%9)&3]);
+    	}
+    	Init();
+    	Editor.setLines(ls1,ls2);
+    </script>
+  </body>
+</html>
