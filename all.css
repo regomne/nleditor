@@ -4,7 +4,7 @@ body
 	margin: 0px;
 	font-family: "Microsoft Yahei";
 
-	overflow: hidden;
+	/*overflow: hidden;*/
 }
 
 #bkgnd
@@ -19,8 +19,10 @@ body
 
 .lines
 {
-	margin: 10px;
+	margin: 1%;
+	width: 98%;
 	overflow: auto;
+	position: absolute;
 	/*border: red solid 1px;*/
 }
 
