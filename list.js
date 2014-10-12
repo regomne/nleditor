@@ -55,56 +55,179 @@
 
 })();
 
-var Editor={
-	linesOld:{},
-	linesNew:{},
-	markedLines:{},
-	curHighlightBox:null,
-	boxStatus:{},
+var Editor=(function(){
 
-	getNumId:function(id)
-	{
-		return id.slice(7); //lineNewXXX
-	},
+    //private:
+	var linesGroup=[];
+    var editableGroups={};
+	var markedLines={};
+	var curHighlightBox=null;
+	var boxStatus={};
 
-	lineClickProc:function() //"this" is not Editor
+    function init()
+    {
+        var doc=$(document);
+        doc.on('click','.line1',lineClickProc);
+        doc.on('blur','.editText',editBlurProc);
+    }
+
+	function getPosFromId(id)
 	{
-		var id=Editor.getNumId(this.id);
-		var status=Editor.boxStatus[id];
+		return {
+            group:parseInt(id.slice(4,5)), //lineX_XX
+            index:parseInt(id.slice(6)),
+        };
+	}
+
+    function getIdFromPos(group,linesNum)
+    {
+        return 'line'+group+'_'+linesNum;
+    }
+
+	function lineClickProc() //"this" is not Editor
+	{
+		var id=getPosFromId(this.id).index;
+		var status=boxStatus[id];
 		if(!status)
 		{
 			this.innerHTML='<textarea class="editText" rows=1>'+this.innerHTML+'</textarea>';
 			$('.editText')[0].focus();
-			Editor.boxStatus[id]='editing';
+			boxStatus[id]='editing';
 		}
-	},
+	}
 
-	editBlurProc:function() //"this" is not Editor
+	function editBlurProc() //"this" is not Editor
 	{
 		var par=this.parentElement;
-		Editor.linesNew[Editor.getNumId(par.id)]=this.value;
-		Editor.boxStatus[Editor.getNumId(par.id)]='';
-		par.innerHTML=xssHelper.encode(this.value);
-	},
+        var pos=getPosFromId(par.id);
+		linesGroup[pos.group][pos.index]=this.value;
+		boxStatus[getPosFromId(par.id).index]='';
+        this.outerText=this.value;
+	}
 
-	setLines:function(ls1,ls2)
+    function setHtmlLineCount(cnt)
+    {
+        var frame=$('.lines')[0];
+        var childCnt=frame.children.length;
+        if(childCnt>cnt)
+        {
+            for(var i=childCnt-1;i>=cnt;i--)
+            {
+                frame.removeChild(frame.children[i]);
+            }
+        }
+        else if(childCnt<cnt)
+        {
+            for(var i=childCnt;i<cnt;i++)
+            {
+                frame.appendChild($('<p class="para" id="para"'+childCnt+'></p>')[0]);
+            }
+        }
+    }
+
+    function getHtmlLineCount()
+    {
+        return $('.lines')[0].children.length;
+    }
+
+    function setParaLine(para,group,idx,str)
+    {
+        var before=null;
+        for(var i=0;i<para.children.length;i++)
+        {
+            var tg=getPosFromId(para.children[i].id).group;
+            if(group==tg)
+            {
+                before=i;
+                break;
+            }
+            else if(group<tg)
+            {
+                before=para.children[i];
+                break;
+            }
+        }
+        if(typeof(before)=='number')
+        {
+            para.children[i].textContent=str;
+            return;
+        }
+        var ele=$('<div class="line'+group+'" id="'+getIdFromPos(group,idx)+'">'+xssHelper.encode(str)+'</div>')[0];
+        para.insertBefore(ele,before);
+    }
+
+    //public:
+	function setLines(group,ls)
 	{
-		this.linesOld=ls1;
-		this.linesNew=ls2;
-		var list=$('.lines');
-		for(var i=0;i<ls1.length;i++)
-		{
-			var para=$('<p class="para"></p>');
-			para.append($('<div class="lineOld" id="lineOld'+i+'">'+xssHelper.encode(ls1[i])+'</div>'));
-			if(ls2[i]!==undefined)
-			{
-				para.append($('<div class="lineNew" id="lineNew'+i+'">'+xssHelper.encode(ls2[i])+'</div>'));
-			}
-			list.append(para);
-		}
+        if(group>linesGroup.length)
+            throw "can't set group n";
+		
+        linesGroup[group]=ls;
+	}
 
-	},
-};
+    function getLines(group,ls)
+    {
+        if(group>=linesGroup.length)
+            throw "group not exists";
+        return linesGroup[group];
+    }
+
+    function getLineInHtml(group,idx)
+    {
+        var l=document.getElementById(getIdFromPos(group,idx));
+        if(l==undefined)
+            return null;
+        if(l.children.length!=0) //assume the children is textarea
+            return l.children[0].value;
+        return l.textContent;
+    }
+
+    function setLineInHtml(group,idx,str)
+    {
+        var l=document.getElementById(getIdFromPos(group,idx));
+        if(l==undefined)
+            return false;
+        l.textContent=str;
+        return true;
+    }
+
+    function updateLines(group)
+    {
+        if(group===undefined)
+        {
+            var maxLineCnt=Math.max.apply(null,linesGroup.map(function(ls){return ls.length}));
+            setHtmlLineCount(maxLineCnt); 
+            for(var i=0;i<linesGroup.length;i++)
+                updateLines(i);
+            return;
+        }
+
+        if(group>=linesGroup.length)
+            return;
+
+        var ls=linesGroup[group];
+        if(ls.length>getHtmlLineCount())
+            setHtmlLineCount(ls.length);
+
+        var paras=$('.para');
+        for(var i=0;i<ls.length;i++)
+        {
+            setParaLine(paras[i],group,i,ls[i]);
+        }
+    }
+
+    init();
+
+    return {
+        setLines:setLines,
+        getLines:getLines,
+
+        setLineInHtml:setLineInHtml,
+        getLineInHtml:getLineInHtml,
+
+        updateLines:updateLines,
+    };
+})();
 
 function Init()
 {
@@ -113,8 +236,6 @@ function Init()
 		$('.lines').css('height',window.innerHeight-20);
 	});
 
-	var doc=$(document);
-	doc.on('click','.lineNew',Editor.lineClickProc);
-	doc.on('blur','.editText',Editor.editBlurProc);
+
 }
 

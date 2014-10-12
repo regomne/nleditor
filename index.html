@@ -24,7 +24,9 @@
     		ls2.push(ls2[((i*13)%9)&3]);
     	}
     	Init();
-    	Editor.setLines(ls1,ls2);
+    	Editor.setLines(0,ls1);
+        Editor.setLines(1,ls2);
+        Editor.updateLines();
     </script>
   </body>
 </html>

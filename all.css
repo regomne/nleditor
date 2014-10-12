@@ -26,19 +26,19 @@ body
 	/*border: red solid 1px;*/
 }
 
-.lineOld,.lineNew
+.line0,.line1
 {
 	margin: 2px;
 	background: rgba(255,255,255,0.5);
 	transition: background 0.5s linear;
 }
 
-.lineOld:hover,.lineNew:hover
+.line0:hover,.line1:hover
 {
 	background: rgba(0,64,255,0.3);
 
 }
-.lineOld::selection,.lineNew::selection
+.line0::selection,.line1::selection
 {
 	background-color: #ff8080;
 }

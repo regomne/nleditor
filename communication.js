@@ -1,5 +1,7 @@
-//nodejs in native:
-var uiproc=(function(){
+	//nodejs in native:
+var comm=(function(){
+	var events=require('events');
+
 	function addingProj(proj)
 	{
 		var ls1=proj.linesOri;
@@ -11,10 +13,11 @@ var uiproc=(function(){
 		Editor.setLines(ls1,ls2);
 	}
 
-	return {
-		addingProject:addingProj,
-	};
+	var ev=new events.EventEmitter();
+	ev.on('addingProj',addingProj);
+
+	return ev;
 })();
 
 //nodejs in backend
-if(module!==undefined) module.exports=uiproc;
+if(module!==undefined) module.exports=comm;

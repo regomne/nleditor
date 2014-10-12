@@ -2,8 +2,9 @@ var fs=require('fs');
 var querystring=require('querystring');
 var path=require('path');
 var iconv=require('iconv-lite');
-//var uiproc=require('./uiproc');
+//var comm=require('./communication');
 //var configs=require('./configs')
+var gLog=function(){console.log.apply(console,arguments)}
 
 function recvCmd(qs,data)
 {
@@ -29,7 +30,7 @@ function recvCmd(qs,data)
 		}
 		catch(e)
 		{
-			console.log('err occured',e);
+			console.log('err occured: ',e);
 		}
 	}
 	else
@@ -66,13 +67,22 @@ var ProjectManager=(function(){
 
 	function createProject(cmd,data)
 	{
-		var oriFileName=cmd.oriFileName;
+		var oriFileName=cmd.name;
 		if(oriFileName===undefined)
 			throw "must have oriFileName";
 		if(typeof(oriFileName)!='string')
 			throw "oriFileName must be unique";
 		
-		var projName=path.basename(oriFileName,'.txt')+'.proj';
+		var projName=genProjName(cmd.name);
+		if(existsProject(projName.toString()))
+		{
+			if(cmd.options=='overwrite')
+				;
+			else if(cmd.options=='open')
+				return openProject(cmd);
+			else
+				throw "proj already existing.";
+		}
 	
 		var codec=cmd.codec;
 		if(codec && !iconv.encodingExists(codec))
@@ -85,17 +95,21 @@ var ProjectManager=(function(){
 		{
 			if(err) throw err;
 			
-			var readLs=readLinesOfFile;
+			var readLs=splitTxtFile(data,codec);
 			var proj={
 				linesOri:readLs.lines,
 				codecOri:readLs.codec,
 			};
 			
-			var ff=iconv.encode(JSON.stringify(proj),'utf16le');
-			
+			var bin=iconv.encode(JSON.stringify(proj),'utf16le');
+			fs.writeFile(projName.toString(),bin,writeFileProc);
 		}
 		
-		
+		function writeFileProc(err,data)
+		{
+			if(err) throw err;
+			gLog(projName+" created");
+		}
 	}
 
 	function openProject(cmd)
@@ -105,17 +119,30 @@ var ProjectManager=(function(){
 			throw "no proj name in openProject";
 		if(typeof(fname)!='string')
 			throw "proj name must be unique";
-		fs.readFile(fname+'.proj',function(err,data){
+		var projName=genProjName(fname);
+		if(!existsProject(projName))
+			throw "proj not exists";
+		fs.readFile(projName.toString(),function(err,data){
 			if(err) throw err;
 			var proj=JSON.parse(data.toString('utf16le'));
-			uiproc.addingProject(proj);
+			comm.emit('addingProject',proj);
 		});
 		return 'reading';
 	}
-	
-	
 
-	function readLinesOfFile(data,codec)
+	function saveProject(cmd,proj)
+	{
+		var projName=genProjName(cmd.name);
+		var bin=iconv.encode(JSON.stringify(proj),'utf16le');
+		fs.writeFile(projName.toString(),bin,function(err,data)
+		{
+			if(err) throw err;
+			gLog("saved.");
+		});
+	}
+
+	//private:
+	function splitTxtFile(data,codec)
 	{
 		if(codec===undefined)
 		{
@@ -137,9 +164,26 @@ var ProjectManager=(function(){
 		};
 	}
 
+	function genProjName(fname)
+	{
+		var baseName=path.basename(fname,'.txt')+'.proj';
+		var dirName=path.dirname(fname);
+		return {
+			projname:baseName,
+			dirname:dirName,
+			toString:function(){return path.join(this.dirname,this.projname)},
+		};
+	}
+
+	function existsProject(projName)
+	{
+		return fs.existsSync(projName.toString());
+	}
+
 	return {
 		createProject:createProject,
 		openProject:openProject,
+		saveProject:saveProject,
 	};
 
 })();
