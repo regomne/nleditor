@@ -19,6 +19,7 @@ function recvCmd(qs,data)
 	var dispTable={
 		openProject:ProjectManager.openProject,
 		createProject:ProjectManager.createProject,
+		saveProject:ProjectManager.saveProject,
 	};
 
 	var ret=undefined;
@@ -67,7 +68,7 @@ project:
 
 var ProjectManager=(function(){
 
-	function createProject(cmd,data)
+	function createProject(cmd)
 	{
 		var oriFileName=cmd.name;
 		if(oriFileName===undefined)
@@ -100,7 +101,7 @@ var ProjectManager=(function(){
 			
 			var readLs=splitTxtFile(data,codec);
 			proj={
-				fileNames:[projName],
+				fileNames:[oriFileName],
 				lineGroups:[readLs.lines],
 				codecs:[readLs.codec],
 			};
@@ -115,6 +116,11 @@ var ProjectManager=(function(){
 			gLog(projName+" created");
 			comm.emit('setProject',proj);
 		}
+	}
+
+	function addTextToProject(cmd)
+	{
+
 	}
 
 	function openProject(cmd)
@@ -151,11 +157,11 @@ var ProjectManager=(function(){
 	{
 		if(codec===undefined)
 		{
-			if(data[0]=='\xfe' && data[1]=='\xff')
-				codec='utf16le';
-			else if(data[0]=='\xff' && data[1]=='\xfe')
+			if(data[0]==0xfe && data[1]==0xff)
 				codec='utf16be';
-			else if(data[0]=='\xef' && data[1]=='\xbb' && data[2]=='\xbf')
+			else if(data[0]==0xff && data[1]==0xfe)
+				codec='utf16le';
+			else if(data[0]==0xef && data[1]==0xbb && data[2]==0xbf)
 				codec='utf8';
 			else
 				codec=configs.defaultCodec;

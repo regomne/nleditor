@@ -1,6 +1,8 @@
 	//nodejs in native:
 var comm=(function(){
 	var events=require('events');
+	var iconv=require('iconv-lite');
+	var fs=require('fs');
 
 	function setProject(proj)
 	{
@@ -12,7 +14,14 @@ var comm=(function(){
 		Editor.updateLines();
 	}
 
-	
+	function exportText(ls,codec,fileName)
+	{
+		var bin=iconv.encode(ls.join('\r\n'),codec);
+		fs.writeFile(fileName,bin,function(err)
+		{
+			if(err) throw err;
+		});
+	}
 
 	var ev=new events.EventEmitter();
 	ev.on('setProject',setProject);
@@ -21,4 +30,3 @@ var comm=(function(){
 })();
 
 //nodejs in backend
-if(module!==undefined) module.exports=comm;
