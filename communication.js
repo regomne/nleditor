@@ -2,19 +2,20 @@
 var comm=(function(){
 	var events=require('events');
 
-	function addingProj(proj)
+	function setProject(proj)
 	{
-		var ls1=proj.linesOri;
-		var ls2=proj.linesOri.slice(0);
-		for(var i in proj.linesMod)
+		Editor.clearAll();
+		for(var i=0;i<proj.lineGroups.length;i++)
 		{
-			ls2[i]=proj.linesMod[i];
+			Editor.setLines(i,proj.lineGroups[i]);
 		}
-		Editor.setLines(ls1,ls2);
+		Editor.updateLines();
 	}
 
+	
+
 	var ev=new events.EventEmitter();
-	ev.on('addingProj',addingProj);
+	ev.on('setProject',setProject);
 
 	return ev;
 })();

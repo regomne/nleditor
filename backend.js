@@ -52,16 +52,18 @@ config:
 */
 
 /*
- *project:
- *{
- *	linesOri:[...]
- *	linesMod:{1:XX,3:XX}
- *	linesMark:{}
- *	codecOfOri:'xxx'
- *	codecOfNew:'xxx'
- *	
- *}
- */
+project:
+{
+	fileNames:['','']
+	lineGroups:[[...],[...]]
+	editableGroups:{}
+	linesMark:{}
+	codecs:['xxx']
+	
+	lastLine
+
+}
+*/
 
 var ProjectManager=(function(){
 
@@ -91,14 +93,16 @@ var ProjectManager=(function(){
 		fs.readFile(oriFileName,readFileProc);
 		return;
 		
+		var proj;
 		function readFileProc(err,data)
 		{
 			if(err) throw err;
 			
 			var readLs=splitTxtFile(data,codec);
-			var proj={
-				linesOri:readLs.lines,
-				codecOri:readLs.codec,
+			proj={
+				fileNames:[projName],
+				lineGroups:[readLs.lines],
+				codecs:[readLs.codec],
 			};
 			
 			var bin=iconv.encode(JSON.stringify(proj),'utf16le');
@@ -109,6 +113,7 @@ var ProjectManager=(function(){
 		{
 			if(err) throw err;
 			gLog(projName+" created");
+			comm.emit('setProject',proj);
 		}
 	}
 
@@ -125,7 +130,7 @@ var ProjectManager=(function(){
 		fs.readFile(projName.toString(),function(err,data){
 			if(err) throw err;
 			var proj=JSON.parse(data.toString('utf16le'));
-			comm.emit('addingProject',proj);
+			comm.emit('setProject',proj);
 		});
 		return 'reading';
 	}
@@ -179,6 +184,34 @@ var ProjectManager=(function(){
 	{
 		return fs.existsSync(projName.toString());
 	}
+/*
+	function genLineGroupsFromProject(proj)
+	{
+		var lg=[];
+		lg[0]=proj.lines0;
+		for(var i=0;i<10;i++)
+		{
+			var mod=proj['linesMod'+i];
+			if(mod!==undefined)
+			{
+				var ls=proj.lines0.slice(0);
+				for(var j in mod)
+				{
+					ls[j]=mod[j];
+				}
+				lg[i]=ls;
+			}
+			else
+				break;
+		}
+		return lg;
+	}
+
+	function genModFromTwoGroups(ori,new)
+	{
+
+	}
+*/
 
 	return {
 		createProject:createProject,

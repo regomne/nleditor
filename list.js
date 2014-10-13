@@ -58,7 +58,7 @@
 var Editor=(function(){
 
     //private:
-	var linesGroup=[];
+	var lineGroups=[];
     var editableGroups={};
 	var markedLines={};
 	var curHighlightBox=null;
@@ -100,7 +100,7 @@ var Editor=(function(){
 	{
 		var par=this.parentElement;
         var pos=getPosFromId(par.id);
-		linesGroup[pos.group][pos.index]=this.value;
+		lineGroups[pos.group][pos.index]=this.value;
 		boxStatus[getPosFromId(par.id).index]='';
         this.outerText=this.value;
 	}
@@ -159,17 +159,27 @@ var Editor=(function(){
     //public:
 	function setLines(group,ls)
 	{
-        if(group>linesGroup.length)
+        if(group>lineGroups.length)
             throw "can't set group n";
 		
-        linesGroup[group]=ls;
+        lineGroups[group]=ls;
 	}
 
     function getLines(group,ls)
     {
-        if(group>=linesGroup.length)
+        if(group>=lineGroups.length)
             throw "group not exists";
-        return linesGroup[group];
+        return lineGroups[group];
+    }
+
+    function clearAll()
+    {
+        $('.lines').empty();
+        lineGroups=[];
+        editableGroups={};
+        markedLines={};
+        curHighlightBox=null;
+        boxStatus={};
     }
 
     function getLineInHtml(group,idx)
@@ -195,17 +205,17 @@ var Editor=(function(){
     {
         if(group===undefined)
         {
-            var maxLineCnt=Math.max.apply(null,linesGroup.map(function(ls){return ls.length}));
+            var maxLineCnt=Math.max.apply(null,lineGroups.map(function(ls){return ls.length}));
             setHtmlLineCount(maxLineCnt); 
-            for(var i=0;i<linesGroup.length;i++)
+            for(var i=0;i<lineGroups.length;i++)
                 updateLines(i);
             return;
         }
 
-        if(group>=linesGroup.length)
+        if(group>=lineGroups.length)
             return;
 
-        var ls=linesGroup[group];
+        var ls=lineGroups[group];
         if(ls.length>getHtmlLineCount())
             setHtmlLineCount(ls.length);
 
@@ -226,6 +236,8 @@ var Editor=(function(){
         getLineInHtml:getLineInHtml,
 
         updateLines:updateLines,
+
+        clearAll:clearAll,
     };
 })();
 
