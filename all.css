@@ -29,6 +29,7 @@ body
 .line0,.line1
 {
 	margin: 2px;
+	font-size: 16px;
 	background: rgba(255,255,255,0.5);
 	transition: background 0.5s linear;
 }
@@ -46,6 +47,7 @@ body
 .editText
 {
 	font-family: "Microsoft Yahei";
+	font-size: 16px;
 	background-color: transparent;
 	margin: 0px;
 	border: 0px;

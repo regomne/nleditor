@@ -59,7 +59,8 @@ var Editor=(function(){
 
     //private:
 	var lineGroups=[];
-    var editableGroups={};
+//    var editableGroups={};
+    var groupAttrs={};
 	var markedLines={};
 	var curHighlightBox=null;
 	var boxStatus={};
@@ -86,13 +87,15 @@ var Editor=(function(){
 
 	function lineClickProc() //"this" is not Editor
 	{
-		var id=getPosFromId(this.id).index;
-		var status=boxStatus[id];
+		var pos=getPosFromId(this.id);
+        if(!groupAttrs[pos.group].editable)
+            return;
+		var status=boxStatus[pos.index];
 		if(!status)
 		{
 			this.innerHTML='<textarea class="editText" rows=1>'+this.innerHTML+'</textarea>';
 			$('.editText')[0].focus();
-			boxStatus[id]='editing';
+			boxStatus[pos.index]='editing';
 		}
 	}
 
@@ -159,11 +162,14 @@ var Editor=(function(){
     //public:
 	function setLines(group,ls)
 	{
-        if(group>lineGroups.length)
-            throw "can't set group n";
-		
         lineGroups[group]=ls;
+        groupAttrs[group]={};
 	}
+
+    function setGroupAttr(group,attr)
+    {
+        groupAttrs[group]=attr;
+    }
 
     function getLines(group,ls)
     {
@@ -172,9 +178,14 @@ var Editor=(function(){
         return lineGroups[group];
     }
 
+    function getGroupAttr(group)
+    {
+        return groupAttrs[group];
+    }
+
     function clearAll()
     {
-        $('.lines').empty();
+        $('.lines')[0].textContent='';
         lineGroups=[];
         editableGroups={};
         markedLines={};
@@ -216,6 +227,9 @@ var Editor=(function(){
             return;
 
         var ls=lineGroups[group];
+        if(!ls)
+            return;
+
         if(ls.length>getHtmlLineCount())
             setHtmlLineCount(ls.length);
 
@@ -231,6 +245,8 @@ var Editor=(function(){
     return {
         setLines:setLines,
         getLines:getLines,
+        setGroupAttr:setGroupAttr,
+        getGroupAttr:getGroupAttr,
 
         setLineInHtml:setLineInHtml,
         getLineInHtml:getLineInHtml,

@@ -20,6 +20,7 @@ function recvCmd(qs,data)
 		openProject:ProjectManager.openProject,
 		createProject:ProjectManager.createProject,
 		saveProject:ProjectManager.saveProject,
+		parseText:ProjectManager.parseText,
 	};
 
 	var ret=undefined;
@@ -57,7 +58,7 @@ project:
 {
 	fileNames:['','']
 	lineGroups:[[...],[...]]
-	editableGroups:{}
+	groupAttrs:[{},{}]
 	linesMark:{}
 	codecs:['xxx']
 	
@@ -103,6 +104,7 @@ var ProjectManager=(function(){
 			proj={
 				fileNames:[oriFileName],
 				lineGroups:[readLs.lines],
+				groupAttrs:[{}],
 				codecs:[readLs.codec],
 			};
 			
@@ -149,6 +151,20 @@ var ProjectManager=(function(){
 		{
 			if(err) throw err;
 			gLog("saved.");
+		});
+	}
+
+	function parseText(cmd,eventTag)
+	{
+		var fname=cmd.name;
+		var codec=cmd.codec;
+		if(codec && !iconv.encodingExists(codec))
+			throw "unknown codec";
+
+		fs.readFile(fname,function(err,data)
+		{
+			var readLs=splitTxtFile(data,codec);
+			comm.emit(eventTag,fname,readLs.lines,readLs.codec);
 		});
 	}
 
@@ -223,6 +239,8 @@ var ProjectManager=(function(){
 		createProject:createProject,
 		openProject:openProject,
 		saveProject:saveProject,
+
+		parseText:parseText,
 	};
 
 })();
