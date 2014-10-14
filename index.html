@@ -3,6 +3,7 @@
   <head>
     <title>Hello World!</title>
     <script src="./jquery-2.1.1.js"></script>
+    <script src="./misc.js"></script>
     <script src="./list.js"></script>
     <script src="./communication.js"></script>
     <script src="./backend.js"></script>
@@ -28,7 +29,12 @@
     	Editor.setLines(0,ls1);
         Editor.setLines(1,ls2);
         Editor.updateLines();*/
-        recvCmd('cmd=createProject&name=test.txt&options=open');
+        comm.emit('c_sendCmd','cmd=parseText','test2.txt',
+        function(ls,codec)
+        {
+            Editor.setLines(0,ls);
+            Editor.updateLines(0);
+        });
     </script>
   </body>
 </html>

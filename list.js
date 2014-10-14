@@ -1,75 +1,69 @@
-﻿var xssHelper=(function(){
-	var REGX_HTML_ENCODE = /"|&|'|<|>|[\x00-\x20]|[\x7F-\xFF]|[\u0100-\u2700]/g;
+﻿
+/*
+config:
+{
+    colors:
+    {
+        
+    }
+    defalutCodec
+}
+*/
 
-    var REGX_HTML_DECODE = /&\w+;|&#(\d+);/g;
+/*
+project:
+{
+    fileNames:['','']
+    lineGroups:[[...],[...]]
+    groupAttrs:[{},{}]
+    linesMark:{}
+    codecs:['xxx']
+    
+    lastLine
 
-    var REGX_TRIM = /(^\s*)|(\s*$)/g;
+}
+*/
 
-    var HTML_DECODE = {
-        "&lt;" : "<", 
-        "&gt;" : ">", 
-        "&amp;" : "&", 
-        "&nbsp;": " ", 
-        "&quot;": "\"", 
-        "&copy;": ""
+var Project=function(proj)
+{
+    if(proj instanceof Object)
+    {
+        this.fileNames=proj.fileNames;
+        this.lineGroups=proj.lineGroups;
+        this.groupAttrs=proj.groupAttrs;
+        this.linesMark=proj.linesMark;
+        this.codecs=proj.codecs;
 
-        // Add more
-    };
+        this.lastLine=proj.lastLine;
+    }
+    else
+    {
+        this.fileNames=[];
+        this.lineGroups=[];
+        this.groupAttrs=[];
+        this.linesMark={};
+        this.codecs=[];
+        this.lastLine=-1;
+    }
+}
 
-    var en = function(s){
-        s = (s != undefined) ? s : s.toString();
-        return (typeof s != "string") ? s :
-            s.replace(REGX_HTML_ENCODE, 
-                      function($0){
-                          var c = $0.charCodeAt(0), r = ["&#"];
-                          c = (c == 0x20) ? 0xA0 : c;
-                          r.push(c); r.push(";");
-                          return r.join("");
-                      });
-    };
-
-    var de=function(s){
-        var HTML_DECODE = HTML_DECODE;
-
-        s = (s != undefined) ? s : s.toString();
-        return (typeof s != "string") ? s :
-            s.replace(REGX_HTML_DECODE,
-                      function($0, $1){
-                          var c = HTML_DECODE[$0];
-                          if(c == undefined){
-                              // Maybe is Entity Number
-                              if(!isNaN($1)){
-                                  c = String.fromCharCode(($1 == 160) ? 32:$1);
-                              }else{
-                                  c = $0;
-                              }
-                          }
-                          return c;
-                      });
-    };
-
-    return {
-    	encode: en,
-    	decode: de,
-    };
-
-})();
 
 var Editor=(function(){
 
     //private:
-	var lineGroups=[];
-//    var editableGroups={};
-    var groupAttrs={};
-	var markedLines={};
-	var curHighlightBox=null;
-	var boxStatus={};
+	var project;
+	var curHighlightBox;
+	var boxStatus;
 
     function init()
     {
         var doc=$(document);
         doc.on('click','.line1',lineClickProc);
         doc.on('blur','.editText',editBlurProc);
+
+        project=new Project();
+        curHighlightBox={};
+        boxStatus={};
     }
 
 	function getPosFromId(id)
@@ -88,7 +82,7 @@ var Editor=(function(){
 	function lineClickProc() //"this" is not Editor
 	{
 		var pos=getPosFromId(this.id);
-        if(!groupAttrs[pos.group].editable)
+        if(!project.groupAttrs[pos.group].editable)
             return;
 		var status=boxStatus[pos.index];
 		if(!status)
@@ -103,7 +97,7 @@ var Editor=(function(){
 	{
 		var par=this.parentElement;
         var pos=getPosFromId(par.id);
-		lineGroups[pos.group][pos.index]=this.value;
+		project.lineGroups[pos.group][pos.index]=this.value;
 		boxStatus[getPosFromId(par.id).index]='';
         this.outerText=this.value;
 	}
@@ -155,42 +149,45 @@ var Editor=(function(){
             para.children[i].textContent=str;
             return;
         }
-        var ele=$('<div class="line'+group+'" id="'+getIdFromPos(group,idx)+'">'+xssHelper.encode(str)+'</div>')[0];
+        var ele=$('<div class="line'+group+'" id="'+getIdFromPos(group,idx)+'">'+Misc.encodeHtml(str)+'</div>')[0];
         para.insertBefore(ele,before);
     }
 
     //public:
 	function setLines(group,ls)
 	{
-        lineGroups[group]=ls;
-        groupAttrs[group]={};
+        project.lineGroups[group]=ls;
+        project.groupAttrs[group]={};
 	}
 
     function setGroupAttr(group,attr)
     {
-        groupAttrs[group]=attr;
+        project.groupAttrs[group]=attr;
     }
 
     function getLines(group,ls)
     {
-        if(group>=lineGroups.length)
+        if(group>=project.lineGroups.length)
             throw "group not exists";
-        return lineGroups[group];
+        return project.lineGroups[group];
     }
 
     function getGroupAttr(group)
     {
-        return groupAttrs[group];
+        return project.groupAttrs[group];
     }
 
     function clearAll()
     {
         $('.lines')[0].textContent='';
-        lineGroups=[];
-        editableGroups={};
-        markedLines={};
+        project=new Project();
         curHighlightBox=null;
         boxStatus={};
+    }
+
+    function setProject(proj)
+    {
+        project=new Project(proj);
     }
 
     function getLineInHtml(group,idx)
@@ -216,17 +213,17 @@ var Editor=(function(){
     {
         if(group===undefined)
         {
-            var maxLineCnt=Math.max.apply(null,lineGroups.map(function(ls){return ls.length}));
+            var maxLineCnt=Math.max.apply(null,project.lineGroups.map(function(ls){return ls.length}));
             setHtmlLineCount(maxLineCnt); 
-            for(var i=0;i<lineGroups.length;i++)
+            for(var i=0;i<project.lineGroups.length;i++)
                 updateLines(i);
             return;
         }
 
-        if(group>=lineGroups.length)
+        if(group>=project.lineGroups.length)
             return;
 
-        var ls=lineGroups[group];
+        var ls=project.lineGroups[group];
         if(!ls)
             return;
 

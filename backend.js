@@ -1,246 +1,149 @@
-var fs=require('fs');
-var querystring=require('querystring');
-var path=require('path');
-var iconv=require('iconv-lite');
-//var comm=require('./communication');
-//var configs=require('./configs')
-var gLog=function(){console.log.apply(console,arguments)}
+var Backend=(function(){
+    var fs=require('fs');
+    var querystring=require('querystring');
+    var path=require('path');
+    var iconv=require('iconv-lite');
+    //var comm=require('./communication');
 
-function recvCmd(qs,data)
-{
-	console.log(qs,'recved');
-	var cmd=querystring.parse(qs);
-	if(cmd['cmd']===undefined)
-	{
-		console.log('no cmd.');
-		return undefined;
-	}
+    //private:
+    function splitTxtFile(data,codec)
+    {
+        if(codec===undefined)
+        {
+            if(data[0]==0xfe && data[1]==0xff)
+                codec='utf16be';
+            else if(data[0]==0xff && data[1]==0xfe)
+                codec='utf16le';
+            else if(data[0]==0xef && data[1]==0xbb && data[2]==0xbf)
+                codec='utf8';
+            else
+                codec='ascii';
+        }
 
-	var dispTable={
-		openProject:ProjectManager.openProject,
-		createProject:ProjectManager.createProject,
-		saveProject:ProjectManager.saveProject,
-		parseText:ProjectManager.parseText,
-	};
+        var str=iconv.decode(data,codec);
+        var lines=str.split('\r\n');
+        return {
+            lines:lines,
+            codec:codec,
+        };
+    }
 
-	var ret=undefined;
-	if(dispTable[cmd['cmd']]!=undefined)
-	{
-		try
-		{
-			ret=dispTable[cmd['cmd']](cmd,data);
-		}
-		catch(e)
-		{
-			console.log('err occured: ',e);
-		}
-	}
-	else
-	{
-		console.log('err cmd: ',cmd['cmd']);
-	}
-	return ret;
-}
+    function genTextName(fname)
+    {
+        return fname;
+    }
+    function genProjName(fname)
+    {
+        return fname;
+    }
 
-/*
-config:
-{
-	colors:
-	{
-		
-	}
-	defalutCodec
-}
-*/
+    function parseText(cmd,data,callback)
+    {
+        var fname=genTextName(data);
+        var codec=cmd.codec;
+        if(codec && !iconv.encodingExists(codec))
+            throw "unknown codec";
 
-/*
-project:
-{
-	fileNames:['','']
-	lineGroups:[[...],[...]]
-	groupAttrs:[{},{}]
-	linesMark:{}
-	codecs:['xxx']
-	
-	lastLine
+        fs.readFile(fname,function(err,data)
+        {
+            var readLs=splitTxtFile(data,codec);
+            comm.emit('s_parseText',readLs,callback);
+            gLog('text:',fname,'parsed');
+        });
+    }
 
-}
-*/
+    function saveText(cmd,data,callback)
+    {
+        var ls=data;
+        var fname=cmd.name;
+        if(fname===undefined)
+            throw "no file name";
+        if(typeof(fname)!='string')
+            throw "file name must be unique";
+        fname=genTextName(fname);
 
-var ProjectManager=(function(){
+        var codec=cmd.codec;
+        if(codec && !iconv.encodingExists(codec))
+            throw 'unknown codec';
+        if(!codec)
+            codec='utf8';
 
-	function createProject(cmd)
-	{
-		var oriFileName=cmd.name;
-		if(oriFileName===undefined)
-			throw "must have oriFileName";
-		if(typeof(oriFileName)!='string')
-			throw "oriFileName must be unique";
-		
-		var projName=genProjName(cmd.name);
-		if(existsProject(projName.toString()))
-		{
-			if(cmd.options=='overwrite')
-				;
-			else if(cmd.options=='open')
-				return openProject(cmd);
-			else
-				throw "proj already existing.";
-		}
-	
-		var codec=cmd.codec;
-		if(codec && !iconv.encodingExists(codec))
-			throw "unknown codec";
+        var bin=iconv.encode(ls.join('\r\n'),codec);
+        fs.writeFile(fname,bin,function(err)
+        {
+            if(err) throw err;
+            comm.emit('s_saveText',callback);
+            gLog('text:',fname,'saved');
+        });
+    }
 
-		fs.readFile(oriFileName,readFileProc);
-		return;
-		
-		var proj;
-		function readFileProc(err,data)
-		{
-			if(err) throw err;
-			
-			var readLs=splitTxtFile(data,codec);
-			proj={
-				fileNames:[oriFileName],
-				lineGroups:[readLs.lines],
-				groupAttrs:[{}],
-				codecs:[readLs.codec],
-			};
-			
-			var bin=iconv.encode(JSON.stringify(proj),'utf16le');
-			fs.writeFile(projName.toString(),bin,writeFileProc);
-		}
-		
-		function writeFileProc(err,data)
-		{
-			if(err) throw err;
-			gLog(projName+" created");
-			comm.emit('setProject',proj);
-		}
-	}
+    function parseProj(cmd,data,callback)
+    {
+        var fname=genProjName(data);
 
-	function addTextToProject(cmd)
-	{
+        fs.readFile(fname,function(err,data)
+        {
+            if(err) throw err;
+            var proj=JSON.parse(iconv.decode(data,'utf16le'));
+            comm.emit('s_parseProj',proj,callback);
+            gLog('proj:',fname,'parsed');
+        });
+    }
 
-	}
+    function saveProj(cmd,data,callback)
+    {
+        var proj=data;
+        var fname=cmd.name;
+        if(fname===undefined)
+            throw "no file name";
+        if(typeof(fname)!='string')
+            throw "file name must be unique";
+        fname=genProjName(fname);
 
-	function openProject(cmd)
-	{
-		var fname=cmd.name;
-		if(fname===undefined)
-			throw "no proj name in openProject";
-		if(typeof(fname)!='string')
-			throw "proj name must be unique";
-		var projName=genProjName(fname);
-		if(!existsProject(projName))
-			throw "proj not exists";
-		fs.readFile(projName.toString(),function(err,data){
-			if(err) throw err;
-			var proj=JSON.parse(data.toString('utf16le'));
-			comm.emit('setProject',proj);
-		});
-		return 'reading';
-	}
+        var bin=iconv.encode(JSON.stringify(proj),'utf16le');
+        fs.writeFile(fname,bin,function(err)
+        {
+            if(err) throw err;
+            comm.emit('s_saveProj',callback);
+            gLog('proj:',fname,'saved');
+        });
+    }
 
-	function saveProject(cmd,proj)
-	{
-		var projName=genProjName(cmd.name);
-		var bin=iconv.encode(JSON.stringify(proj),'utf16le');
-		fs.writeFile(projName.toString(),bin,function(err,data)
-		{
-			if(err) throw err;
-			gLog("saved.");
-		});
-	}
+    function recvCmd(qs,data,callback)
+    {
+        gLog(qs,'recved');
+        var cmd=querystring.parse(qs);
+        if(cmd['cmd']===undefined)
+        {
+            gLog('no cmd.');
+            comm.emit('s_error','no cmd');
+        }
 
-	function parseText(cmd,eventTag)
-	{
-		var fname=cmd.name;
-		var codec=cmd.codec;
-		if(codec && !iconv.encodingExists(codec))
-			throw "unknown codec";
+        var dispTable={
+            parseText:parseText,
+        };
 
-		fs.readFile(fname,function(err,data)
-		{
-			var readLs=splitTxtFile(data,codec);
-			comm.emit(eventTag,fname,readLs.lines,readLs.codec);
-		});
-	}
+        if(dispTable[cmd['cmd']]!=undefined)
+        {
+            try
+            {
+                dispTable[cmd['cmd']](cmd,data,callback);
+            }
+            catch(e)
+            {
+                gLog('processing',cmd['cmd'],'err occured: ',e);
+                comm.emit('s_error',e);
+            }
+        }
+        else
+        {
+            gLog('err cmd: ',cmd['cmd']);
+            comm.emit('s_error','err cmd: '+cmd['cmd']);
+        }
+    }
 
-	//private:
-	function splitTxtFile(data,codec)
-	{
-		if(codec===undefined)
-		{
-			if(data[0]==0xfe && data[1]==0xff)
-				codec='utf16be';
-			else if(data[0]==0xff && data[1]==0xfe)
-				codec='utf16le';
-			else if(data[0]==0xef && data[1]==0xbb && data[2]==0xbf)
-				codec='utf8';
-			else
-				codec=configs.defaultCodec;
-		}
-
-		var str=iconv.decode(data,codec);
-		var lines=str.split('\r\n');
-		return {
-			lines:lines,
-			codec:codec,
-		};
-	}
-
-	function genProjName(fname)
-	{
-		var baseName=path.basename(fname,'.txt')+'.proj';
-		var dirName=path.dirname(fname);
-		return {
-			projname:baseName,
-			dirname:dirName,
-			toString:function(){return path.join(this.dirname,this.projname)},
-		};
-	}
-
-	function existsProject(projName)
-	{
-		return fs.existsSync(projName.toString());
-	}
-/*
-	function genLineGroupsFromProject(proj)
-	{
-		var lg=[];
-		lg[0]=proj.lines0;
-		for(var i=0;i<10;i++)
-		{
-			var mod=proj['linesMod'+i];
-			if(mod!==undefined)
-			{
-				var ls=proj.lines0.slice(0);
-				for(var j in mod)
-				{
-					ls[j]=mod[j];
-				}
-				lg[i]=ls;
-			}
-			else
-				break;
-		}
-		return lg;
-	}
-
-	function genModFromTwoGroups(ori,new)
-	{
-
-	}
-*/
-
-	return {
-		createProject:createProject,
-		openProject:openProject,
-		saveProject:saveProject,
-
-		parseText:parseText,
-	};
+    return {
+        recvCmd:recvCmd,
+    };
 
 })();
