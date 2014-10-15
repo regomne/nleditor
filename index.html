@@ -29,7 +29,7 @@
     	Editor.setLines(0,ls1);
         Editor.setLines(1,ls2);
         Editor.updateLines();*/
-        comm.emit('c_sendCmd','cmd=parseText','test2.txt',
+        comm.emit('c_sendCmd','cmd=parseText','test.txt',
         function(ls,codec)
         {
             Editor.setLines(0,ls);

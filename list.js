@@ -47,7 +47,18 @@ var Project=function(proj)
     }
 }
 
+var getInter=(function(){
+    var time=0;
 
+    return function()
+    {
+        var dt=new Date();
+        var time1=dt.getTime();
+        var s=(time1-time);
+        time=time1;
+        return s;
+    };
+})();
 var Editor=(function(){
 
     //private:
@@ -115,10 +126,12 @@ var Editor=(function(){
         }
         else if(childCnt<cnt)
         {
+            var fr=document.createDocumentFragment();
             for(var i=childCnt;i<cnt;i++)
             {
-                frame.appendChild($('<p class="para" id="para"'+childCnt+'></p>')[0]);
+                fr.appendChild($('<p class="para" id="para"'+childCnt+'></p>')[0]);
             }
+            frame.appendChild(fr);
         }
     }
 
@@ -226,15 +239,16 @@ var Editor=(function(){
         var ls=project.lineGroups[group];
         if(!ls)
             return;
-
+        getInter();
         if(ls.length>getHtmlLineCount())
             setHtmlLineCount(ls.length);
-
+        console.log('1',getInter());
         var paras=$('.para');
         for(var i=0;i<ls.length;i++)
         {
             setParaLine(paras[i],group,i,ls[i]);
         }
+        console.log('1',getInter());
     }
 
     init();

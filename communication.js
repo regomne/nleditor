@@ -72,6 +72,11 @@ var comm=(function(){
 		cb();
 	}
 
+	function s_error(e)
+	{
+		gLog("error occured",e);
+	}
+
 	function c_sendCmd(cmd,data,cb)
 	{
 		Backend.recvCmd(cmd,data,cb)
@@ -82,6 +87,7 @@ var comm=(function(){
 	ev.on('s_saveText',s_saveText);
 	ev.on('s_parseProj',s_parseProj);
 	ev.on('s_saveProj',s_saveProj);
+	ev.on('s_error',s_error);
 	ev.on('c_sendCmd',c_sendCmd);
 
 	return ev;

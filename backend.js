@@ -46,6 +46,7 @@ var Backend=(function(){
 
         fs.readFile(fname,function(err,data)
         {
+        	if(err) throw err;
             var readLs=splitTxtFile(data,codec);
             comm.emit('s_parseText',readLs,callback);
             gLog('text:',fname,'parsed');
