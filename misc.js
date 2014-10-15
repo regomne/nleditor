@@ -80,11 +80,18 @@ var Misc=(function(){
         throw new Error("Unable to copy obj! Its type isn't supported.");
     }
 
+    function chooseFile(name,cb)
+    {
+      var chooser=$(name);
+      chooser.change(cb);
+      chooser.trigger('click');
+    }
 
     return {
         encodeHtml: en,
         decodeHtml: de,
         clone:clone,
+        chooseFile:chooseFile,
     };
 
 })();

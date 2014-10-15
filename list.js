@@ -30,9 +30,9 @@ var Project=function(proj)
     {
         this.fileNames=proj.fileNames;
         this.lineGroups=proj.lineGroups;
+        this.codecs=proj.codecs;
         this.groupAttrs=proj.groupAttrs;
         this.linesMark=proj.linesMark;
-        this.codecs=proj.codecs;
 
         this.lastLine=proj.lastLine;
     }
@@ -40,12 +40,29 @@ var Project=function(proj)
     {
         this.fileNames=[];
         this.lineGroups=[];
+        this.codecs=[];
         this.groupAttrs=[];
         this.linesMark={};
-        this.codecs=[];
         this.lastLine=-1;
     }
 }
+
+Project.prototype.addGroup=function(fname,lines,codec,attr)
+{
+    this.fileNames.push(fname);
+    this.lineGroups.push(lines);
+    this.codecs.push(codec);
+    this.groupAttrs.push(attr);
+}
+
+Project.prototype.setGroup=function(group,fname,lines,codec,attr)
+{
+    this.fileNames[group]=fname;
+    this.lineGroups[group]=lines;
+    this.codecs[group]=codec;
+    this.groupAttrs[group]=attr;
+}
+
 
 var getInter=(function(){
     var time=0;
@@ -126,12 +143,12 @@ var Editor=(function(){
         }
         else if(childCnt<cnt)
         {
-            var fr=document.createDocumentFragment();
+            //var fr=document.createDocumentFragment();
             for(var i=childCnt;i<cnt;i++)
             {
-                fr.appendChild($('<p class="para" id="para"'+childCnt+'></p>')[0]);
+                frame.appendChild($('<p class="para" id="para"'+childCnt+'></p>')[0]);
             }
-            frame.appendChild(fr);
+            //frame.appendChild(fr);
         }
     }
 
@@ -167,10 +184,11 @@ var Editor=(function(){
     }
 
     //public:
-	function setLines(group,ls)
+	function setLines(group,ls,attr)
 	{
         project.lineGroups[group]=ls;
         project.groupAttrs[group]={};
+        project.setGroup(group,'',ls,'utf16le',attr);
 	}
 
     function setGroupAttr(group,attr)
@@ -275,6 +293,16 @@ function Init()
 		$('.lines').css('height',window.innerHeight-20);
 	});
 
-
+    $('#btn_open').on('click',function()
+    {
+        Misc.chooseFile('#openFile',function(evt){
+            comm.emit('c_sendCmd','cmd=parseText',this.value,
+            function(ls,codec)
+            {
+                Editor.setLines(0,ls,{});
+                Editor.updateLines(0);
+            });
+        });
+    });
 }
 

@@ -12,10 +12,13 @@
     <link rel="stylesheet" type="text/css" href="./all.css" />
   </head>
   <body>
-    	<img id="bkgnd" src="./bkgnd.jpg" />
-    	<div class="lines">
-    		
-    	</div>
+    <img id="bkgnd" src="./bkgnd.jpg" />
+    <div class="lines"></div>
+    <div class="buttonGroup">
+      <div class="button" id="btn_open">O</div>
+      <div class="button" id="btn_save">S</div>
+    </div>
+    <input style="display:none;" id="openFile" type="file" accept=".txt,.proj"/>
     
     <script type="text/javascript">
         Init();
@@ -29,12 +32,7 @@
     	Editor.setLines(0,ls1);
         Editor.setLines(1,ls2);
         Editor.updateLines();*/
-        comm.emit('c_sendCmd','cmd=parseText','test.txt',
-        function(ls,codec)
-        {
-            Editor.setLines(0,ls);
-            Editor.updateLines(0);
-        });
+        
     </script>
   </body>
 </html>
