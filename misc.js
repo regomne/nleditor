@@ -87,11 +87,32 @@ var Misc=(function(){
       chooser.trigger('click');
     }
 
+    function genNewScPath(fname)
+    {
+      fname=fname.replace('/','\\');
+      if(fname.indexOf('\\')==-1)
+      {
+        return 'NewSc\\'+fname;
+      }
+
+      var eles=fname.split('\\');
+      var path=eles.slice(0,-1).join('\\');
+      return path+'\\NewSc\\'+eles[eles.length-1];
+    }
+
+    function existsFile(fname)
+    {
+      var fs=require('fs');
+      return fs.existsSync(fname);
+    }
+
     return {
         encodeHtml: en,
         decodeHtml: de,
         clone:clone,
+        genNewScPath:genNewScPath,
         chooseFile:chooseFile,
+        existsFile:existsFile,
     };
 
 })();
