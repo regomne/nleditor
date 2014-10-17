@@ -83,17 +83,16 @@ var Editor=(function(){
   //private:
   var project;
   var curHighlightBox;
-  var boxStatus;
 
   function init()
   {
     var doc=$(document);
     doc.on('click','.line1',lineClickProc);
-    //doc.on('blur','#editText',editBlurProc);
+    doc.on('blur','.editText',editBlurProc);
+    doc.on('keypress','.editText',editKeyPressProc);
 
     project=new Project();
     curHighlightBox={};
-    boxStatus={};
   }
 
   function getPosFromId(id)
@@ -114,23 +113,31 @@ var Editor=(function(){
     var pos=getPosFromId(this.id);
     if(!project.groupAttrs[pos.group].editable)
       return;
-    var status=boxStatus[pos.index];
-    if(!status)
+    if(!this.myIsEditing)
     {
       this.innerHTML='<textarea class="editText">'+this.innerHTML+'</textarea>';
+
       $('.editText').flexText();
-      $('.editText')[0].focus();
-      boxStatus[pos.index]='editing';
+      var te=$('.editText')[0];
+      te.myPos=pos;
+      te.focus();
+      this.myIsEditing=true;
     }
   }
 
   function editBlurProc() //"this" is not Editor
   {
-    var par=this.parentElement;
-    var pos=getPosFromId(par.id);
+    var pos=this.myPos;
     project.lineGroups[pos.group][pos.index]=this.value;
-    boxStatus[getPosFromId(par.id).index]='';
-    this.outerText=this.value;
+    setLineInHtml(pos.group,pos.index,this.value);
+  }
+  function editKeyPressProc(e)
+  {
+    if(e.which==13)
+    {
+      console.log('entered');
+      return false;
+    }
   }
 
   function setHtmlLineCount(cnt)
@@ -240,6 +247,7 @@ var Editor=(function(){
     if(l==undefined)
       return false;
     l.textContent=str;
+    l.myIsEditing=false;
     return true;
   }
 
@@ -291,6 +299,56 @@ var Editor=(function(){
   };
 })();
 
+var App=(function(){
+
+    function init()
+    {
+      $('#btn_open').on('click',buttonOpen);
+    }
+
+    function buttonOpen(evt)
+    {
+    Misc.chooseFile('#openFile',function(evt)
+    {
+      var fname=this.value;
+      comm.emit('c_sendCmd','cmd=parseText',fname,
+      function(ls,codec)
+      {
+        var proj=CurrentProject=new Project();
+        Editor.linkProject(proj);
+        proj.addGroup(fname,ls,codec,{});
+
+        if(configs.useNewsc=='ifexists' ||
+            configs.useNewsc=='always')
+        {
+            var newScName=Misc.genNewScPath(fname);
+            if(Misc.existsFile(newScName))
+            {
+              comm.emit('c_sendCmd','cmd=parseText',newScName,
+              function(ls,codec)
+              {
+                CurrentProject.addGroup(newScName,ls,codec,{editable:true});
+                Editor.updateLines(1);
+              });
+            }
+            else if(configs.useNewsc=='always')
+            {
+                proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
+            }
+        }
+
+        Editor.updateLines();
+      });
+    });
+    }
+
+    init();
+
+    return {
+
+    };
+})();
+
 function Init()
 {
   $('.lines').css('height',window.innerHeight-20);
@@ -313,30 +371,6 @@ function Init()
 
   $('#btn_open').on('click',function()
   {
-    Misc.chooseFile('#openFile',function(evt)
-    {
-      var fname=this.value;
-      comm.emit('c_sendCmd','cmd=parseText',fname,
-      function(ls,codec)
-      {
-        var proj=CurrentProject=new Project();
-        Editor.linkProject(proj);
-        proj.addGroup(fname,ls,codec,{});
-
-        var newScName=Misc.genNewScPath(fname);
-        if(Misc.existsFile(newScName))
-        {
-          comm.emit('c_sendCmd','cmd=parseText',newScName,
-          function(ls,codec)
-          {
-            CurrentProject.addGroup(newScName,ls,codec,{editable:true});
-            Editor.updateLines(1);
-          });
-        }
-
-        Editor.updateLines(0);
-      });
-    });
   });
 }
 
