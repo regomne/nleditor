@@ -83,6 +83,8 @@ var Editor=(function(){
   //private:
   var project;
   var curHighlightBox;
+  var undoList;
+  var modified;
 
   function init()
   {
@@ -90,9 +92,9 @@ var Editor=(function(){
     doc.on('click','.line1',lineClickProc);
     doc.on('blur','.editText',editBlurProc);
     doc.on('keypress','.editText',editKeyPressProc);
+    //doc.on('click','.para',paraClickProc);
 
-    project=new Project();
-    curHighlightBox={};
+    clearAll();
   }
 
   function getPosFromId(id)
@@ -108,6 +110,24 @@ var Editor=(function(){
     return 'line'+group+'_'+linesNum;
   }
 
+  function getQuotedText(str)
+  {
+    var start=0;
+    var end=str.length;
+    for(var i=0;i<configs.selectPattern.length;i++)
+    {
+      var rslt=configs.selectPattern[i].exec(str);
+      if(rslt)
+      {
+        start=rslt.index+1;
+        end=start+rslt[1].length;
+        break;
+      }
+
+    }
+    return {start:start,end:end};
+  }
+
   function lineClickProc() //"this" is not Editor
   {
     var pos=getPosFromId(this.id);
@@ -115,12 +135,15 @@ var Editor=(function(){
       return;
     if(!this.myIsEditing)
     {
+      var selection=getQuotedText(this.textContent);
       this.innerHTML='<textarea class="editText">'+this.innerHTML+'</textarea>';
 
       $('.editText').flexText();
       var te=$('.editText')[0];
       te.myPos=pos;
       te.focus();
+      te.selectionStart=selection.start;
+      te.selectionEnd=selection.end;
       this.myIsEditing=true;
     }
   }
@@ -135,9 +158,45 @@ var Editor=(function(){
   {
     if(e.which==13)
     {
-      console.log('entered');
+      //console.dir(this);
+      var pos=this.myPos;
+      editBlurProc.apply(this);
+      if(pos.index<project.lineGroups[pos.group].length-1)
+      {
+        var nextLine=$('#'+getIdFromPos(pos.group,pos.index+1));
+        if(nextLine)
+        {
+          //console.dir(nextLine);
+          var ls=$('.lines');
+          var destTop=nextLine[0].offsetTop-window.innerHeight/2+nextLine.height();
+          if(ls.scrollTop()<destTop)
+          {
+            ls.animate({scrollTop:destTop},300);
+          }
+          nextLine.click();
+        }
+      }
       return false;
     }
+  }
+
+  function paraClickProc()
+  {
+    var rect=$('#hlRect');
+    if(rect.length==0)
+    {
+      console.log('creating');
+      rect=$('<div id="hlRect"></div>');
+      $('.lines')[0].appendChild(rect[0]);
+    }
+    th=$(this);
+    rect.css({
+      height:th.height(),
+      width:th.width()-2,
+      display:"block",
+      left:th[0].offsetLeft,
+      top:th[0].offsetTop-2,
+    });
   }
 
   function setHtmlLineCount(cnt)
@@ -156,7 +215,7 @@ var Editor=(function(){
       //var fr=document.createDocumentFragment();
       for(var i=childCnt;i<cnt;i++)
       {
-        frame.appendChild($('<p class="para" id="para"'+childCnt+'></p>')[0]);
+        frame.appendChild($('<p class="para" id="para'+i+'"></p>')[0]);
       }
       //frame.appendChild(fr);
     }
@@ -220,10 +279,12 @@ var Editor=(function(){
 
   function clearAll()
   {
-    $('.lines')[0].textContent='';
+    //$('.lines')[0].textContent='';
     project=new Project();
-    curHighlightBox=null;
-    boxStatus={};
+    curHighlightBox=-1;
+    undoList=[];
+    modified=false;
+
   }
 
   function linkProject(proj)
@@ -280,6 +341,11 @@ var Editor=(function(){
     console.log('1',getInter());
   }
 
+  function isModified()
+  {
+    return modified;
+  }
+
   init();
 
   return {
@@ -294,6 +360,7 @@ var Editor=(function(){
     getLineInHtml:getLineInHtml,
 
     updateLines:updateLines,
+    isModified:isModified,
 
     clearAll:clearAll,
   };
@@ -304,23 +371,93 @@ var App=(function(){
     function init()
     {
       $('#btn_open').on('click',buttonOpen);
+      $('#btn_save').on('click',buttonSave);
     }
 
-    function buttonOpen(evt)
+    function showModalDialog(text,type,callback)
     {
-    Misc.chooseFile('#openFile',function(evt)
-    {
-      var fname=this.value;
-      comm.emit('c_sendCmd','cmd=parseText',fname,
-      function(ls,codec)
+      var cnt=1;
+      var btntext=[CurLang.confirmOk];
+      if(type=='yesno')
       {
-        var proj=CurrentProject=new Project();
-        Editor.linkProject(proj);
-        proj.addGroup(fname,ls,codec,{});
+        cnt=2;
+        btntext=[CurLang.confirmYes,CurLang.confirmNo];
+      }
+      else if(type=='okcancel')
+      {
+        cnt=2;
+        btntext=[CurLang.confirmOk,CurLang.confirmCancel];
+      }
+      else if(type=='yesnocancel')
+      {
+        cnt=3;
+        btntext=[CurLang.confirmYes,CurLang.confirmNo,CurLang.confirmCancel];
+      }
+      //else use ok
 
-        if(configs.useNewsc=='ifexists' ||
-            configs.useNewsc=='always')
+      var eles='';
+      for(var i=0;i<cnt;i++)
+      {
+        eles+=Misc.format('<div class="confirmButton animButton" id="confirmButton{0}">{1}</div>',i,btntext[i]);
+      }
+      eles+='<br/>';
+      var group=$('#confirmButtonGroup');
+      group[0].textContent='';
+      eles=$(eles);
+      eles.css('width',100/cnt+'%');
+      group.append(eles);
+      $('#confirmTextBox')[0].textContent=text;
+
+      var userSelect=-1;
+      $('.confirmButton').on('click',function(evt){
+        userSelect=this.id.slice(-1);
+        $.magnificPopup.close();
+      });
+
+      $.magnificPopup.open({
+        items: {
+          src: '#confirmBox'
+        },
+        type: 'inline',
+        removalDelay: 300,
+        mainClass: 'mfp-fade',
+        showCloseBtn:false,
+        callbacks:{close: function(arg){
+          callback(userSelect);
+        }},
+      }, 0);
+    }
+
+    //has bug
+    function showHint(text,color)
+    {
+      var hintbox=$('#hintBox');
+      hintbox[0].innerText=text;
+      color=color||'red';
+      hintbox.css('color',color);
+
+      hintbox.css('opacity',1);
+      setTimeout(function(){
+        if($('#hintBox')[0].innerText==text)
+          hintbox.css('opacity',0);
+      },4000);
+    }
+
+    function buttonOpen()
+    {
+      Misc.chooseFile('#openFile',function(evt)
+      {
+        var fname=this.value;
+        comm.emit('c_sendCmd','cmd=parseText',fname,
+        function(ls,codec)
         {
+          var proj=CurrentProject=new Project();
+          Editor.linkProject(proj);
+          proj.addGroup(fname,ls,codec,{});
+
+          if(configs.useNewsc=='ifexists' ||
+              configs.useNewsc=='always')
+          {
             var newScName=Misc.genNewScPath(fname);
             if(Misc.existsFile(newScName))
             {
@@ -333,19 +470,28 @@ var App=(function(){
             }
             else if(configs.useNewsc=='always')
             {
-                proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
+              proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
             }
-        }
+          }
 
-        Editor.updateLines();
+          Editor.updateLines();
+        });
       });
-    });
+    }
+
+    function buttonSave()
+    {
+      showModalDialog(CurLang.confirmClose,'yesnocancel',function(id)
+        {
+          console.log(id);
+        });
     }
 
     init();
 
     return {
-
+      showModalDialog:showModalDialog,
+      showHint:showHint,
     };
 })();
 
@@ -355,6 +501,15 @@ function Init()
   $(window).on('resize',function(){
     $('.lines').css('height',window.innerHeight-20);
   });
+  var doc=$(document);
+  doc.on('mousedown','.animButton',function(){
+    $(this).css('background','rgba(0,64,255,0.8)');
+  });
+  doc.on('mouseup','.animButton',function(){
+    $(this).css('background','rgba(0,64,255,0.5)');
+  });
+}
+
     /*var ls1=['abc','呵呵','wocao','测试测试'];
       var ls2=['abc</div><div>he','呵呵2','wocal','擦你妹'];
       for(var i=0;i<100;i++)
@@ -367,10 +522,3 @@ function Init()
         proj.addGroup('',ls1,1,{});
         proj.addGroup('',ls2,1,{editable:true});
         Editor.updateLines();*/
-
-
-  $('#btn_open').on('click',function()
-  {
-  });
-}
-

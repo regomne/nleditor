@@ -23,6 +23,7 @@ body
 	width: 98%;
 	overflow: auto;
 	position: absolute;
+	z-index: 1;
 	/*border: red solid 1px;*/
 }
 .para
@@ -47,13 +48,37 @@ body
 	background-color: #ff8080;
 }
 
-
-.buttonGroup
+.editText
 {
-	position: fixed;
+	background: rgba(0,180,60,0.4);
 }
 
-.button
+#hlRect
+{
+	position: absolute;
+	display: none;
+	border: blue solid 2px;
+	transition: all 0.3s;
+	z-index: 0;
+}
+
+.animButton
+{
+	transition: background 0.5s;
+	border: 1px black;
+}
+.animButton:hover
+{
+	background: rgba(0,64,255,0.5);
+}
+
+.menuButtonGroup
+{
+	position: fixed;
+	z-index: 10
+}
+
+.menuButton
 {
 	/*position: fixed;*/
 	opacity: 0.2;
@@ -62,9 +87,49 @@ body
 	cursor: default;
 }
 
-.button:hover
+.menuButton:hover
 {
 	opacity: 1.0;
+}
+
+.confirmBox
+{
+	/*position: relative;*/
+  background: #FFF;
+  padding: 40px;
+  width: auto;
+  max-width: 200px;
+  margin: 20px auto;
+  text-align: center;
+ 	cursor: default !important;
+
+}
+#confirmTextBox
+{
+	width: auto;
+	text-align: center;
+	margin-top: 5px;
+	margin-bottom: 15px;
+}
+.confirmButton
+{
+	float:left;
+	width:100%;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	
+}
+
+.hintBox
+{
+	position: fixed;
+	font-size: 20px;
+	width: 100%;
+	text-align: center;
+	transition: all 1s;
+	opacity: 0;
+	z-index: 0;
+	text-shadow: 1px 1px 4px black;
 }
 
 .flex-text-wrap {

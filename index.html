@@ -2,27 +2,45 @@
 <html>
   <head>
     <title>Hello World!</title>
+
+    <link rel="stylesheet" type="text/css" href="./all.css" />
+    <link rel="stylesheet" type="text/css" href="./magnific-popup.css" />
+  </head>
+  <body>
+    <img id="bkgnd" src="./bkgnd.jpg" />
+    <div class="lines"></div>
+    <div class="menuButtonGroup">
+      <div class="menuButton" id="btn_open">O</div>
+      <div class="menuButton" id="btn_save">S</div>
+    </div>
+
+    <!--打开文件对话框用-->
+    <input style="display:none;" id="openFile" type="file" accept=".txt,.proj"/>
+
+    <!-- 显示模态对话框用 -->
+    <div id="confirmBox" class="mfp-hide confirmBox">
+        <div id="confirmTextBox">Confirm</div>
+        <div id="confirmButtonGroup">
+            <div class="confirmButton animButton" id="confirmButton1">Yes</div>
+            <br/>
+        </div>
+    </div>
+    
+    <!-- hint -->
+    <div id="hintBox" class="hintBox">This is hint.</div>
+    
     <script src="./jquery-2.1.1.js"></script>
     <script src="./jquery.flexText.js"></script>
+    <script src="./jquery.magnific-popup.js"></script>
     <script src="./misc.js"></script>
     <script src="./list.js"></script>
     <script src="./communication.js"></script>
     <script src="./backend.js"></script>
     <script src="./configs.js"></script>
-
-    <link rel="stylesheet" type="text/css" href="./all.css" />
-  </head>
-  <body>
-    <img id="bkgnd" src="./bkgnd.jpg" />
-    <div class="lines"></div>
-    <div class="buttonGroup">
-      <div class="button" id="btn_open">O</div>
-      <div class="button" id="btn_save">S</div>
-    </div>
-    <input style="display:none;" id="openFile" type="file" accept=".txt,.proj"/>
-    
     <script type="text/javascript">
-        Init();
+        $(document).ready(function(){
+            Init();
+        });
     </script>
   </body>
 </html>

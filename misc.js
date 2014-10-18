@@ -80,6 +80,18 @@ var Misc=(function(){
         throw new Error("Unable to copy obj! Its type isn't supported.");
     }
 
+    function format(str)
+    {
+      var params=[];
+      for(var i=1;i<arguments.length;i++)
+        params.push(arguments[i]);
+      var reg = /\{(\d+)\}/gm;
+      return str.replace(reg,function(match,name)
+      {
+        return params[~~name];
+      })
+    }
+
     function chooseFile(name,cb)
     {
       var chooser=$(name);
@@ -110,6 +122,7 @@ var Misc=(function(){
         encodeHtml: en,
         decodeHtml: de,
         clone:clone,
+        format:format,
         genNewScPath:genNewScPath,
         chooseFile:chooseFile,
         existsFile:existsFile,
