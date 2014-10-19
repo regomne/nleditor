@@ -7,69 +7,24 @@ var comm=(function(){
   var iconv=require('iconv-lite');
   var fs=require('fs');
 
-  function setProject(proj)
+  function s_parseText(err,ls,cb)
   {
-    Editor.clearAll();
-    for(var i=0;i<proj.lineGroups.length;i++)
-    {
-      Editor.setLines(i,proj.lineGroups[i]);
-    }
-    Editor.updateLines();
-    CurrentProject=proj;
+    cb(err,ls.lines,ls.codec);
   }
 
-  function exportText(ls,codec,fileName)
+  function s_saveText(err,cb)
   {
-    var bin=iconv.encode(ls.join('\r\n'),codec);
-    fs.writeFile(fileName,bin,function(err)
-    {
-      if(err) throw err;
-    });
+    cb(err);
   }
 
-  function addGroupToCurrent(fname,ls,codec)
+  function s_parseProj(err,proj,cb)
   {
-    var proj=CurrentProject;
-    var curi=proj.lineGroups.length;
-    proj.fileNames.push(fname);
-    proj.lineGroups.push(ls);
-    proj.codecs.push(codec);
-
-    Editor.setLines(curi,proj.lineGroups[curi]);
-    Editor.updateLines(curi);
+    cb(err,proj);
   }
 
-  function duplicateGroup(group)
+  function s_saveProj(err,cb)
   {
-    var proj=CurrentProject;
-    var curi=proj.lineGroups.length;
-    proj.fileNames.push('');
-    proj.lineGroups.push(proj.lineGroups[curi-1].slice(0));
-    proj.codecs.push(proj.codecs[curi-1]);
-
-    Editor.setLines(curi,proj.lineGroups[curi]);
-    Editor.setGroupAttr(curi,{editable:true})
-    Editor.updateLines(curi);
-  }
-
-  function s_parseText(ls,cb)
-  {
-    cb(ls.lines,ls.codec);
-  }
-
-  function s_saveText(cb)
-  {
-    cb();
-  }
-
-  function s_parseProj(proj,cb)
-  {
-    cb(proj);
-  }
-
-  function s_saveProj(cb)
-  {
-    cb();
+    cb(err);
   }
 
   function s_error(e)

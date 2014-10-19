@@ -48,7 +48,6 @@ var Project=function(proj)
   }
 }
 
-
 Project.prototype.addGroup=function(fname,lines,codec,attr)
 {
   this.fileNames.push(fname);
@@ -65,6 +64,13 @@ Project.prototype.setGroup=function(group,fname,lines,codec,attr)
   this.groupAttrs[group]=attr;
 }
 
+Project.prototype.saveProject=function(cb)
+{
+  var fname=this.fileNames[0];
+  if(!fname)
+    return;
+  comm.emit('c_sendCmd','cmd=saveProj&name='+encodeURI(fname),this,cb);
+}
 
 var getInter=(function(){
   var time=0;
@@ -82,9 +88,8 @@ var Editor=(function(){
 
   //private:
   var project;
-  var curHighlightBox;
+  //var curHighlightBox;
   var undoList;
-  var modified;
 
   function init()
   {
@@ -151,8 +156,7 @@ var Editor=(function(){
   function editBlurProc() //"this" is not Editor
   {
     var pos=this.myPos;
-    project.lineGroups[pos.group][pos.index]=this.value;
-    setLineInHtml(pos.group,pos.index,this.value);
+    modifyLine(pos.group,pos.index,this.value);
   }
   function editKeyPressProc(e)
   {
@@ -252,6 +256,28 @@ var Editor=(function(){
     para.insertBefore(ele,before);
   }
 
+  function getLineInHtml(group,idx)
+  {
+    var l=document.getElementById(getIdFromPos(group,idx));
+    if(l==undefined)
+      return null;
+    // if(l.children.length!=0) //assume the children is textarea
+    //   return l.children[0].value;
+    return l.textContent;
+  }
+
+  function setLineInHtml(group,idx,str,isMod)
+  {
+    var l=$('#'+getIdFromPos(group,idx));
+    if(l.length==0)
+      return false;
+    l[0].textContent=str;
+    l[0].myIsEditing=false;
+    if(isMod)
+      l.addClass('modifiedLine');
+    return true;
+  }
+
   //public:
   function setLines(group,ls,attr)
   {
@@ -277,13 +303,26 @@ var Editor=(function(){
     return project.groupAttrs[group];
   }
 
+  function modifyLine(group,idx,str)
+  {
+    var oldStr=project.lineGroups[group][idx];
+    if(oldStr==str)
+    {
+      setLineInHtml(group,idx,str,false);
+      return;
+    }
+    project.lineGroups[group][idx]=str;
+    setLineInHtml(group,idx,str,true);
+  }
+
   function clearAll()
   {
-    //$('.lines')[0].textContent='';
+    $('.lines')[0].textContent='';
     project=new Project();
-    curHighlightBox=-1;
+    //curHighlightBox=-1;
     undoList=[];
-    modified=false;
+    undoList.savedIdx=0;
+    undoList.curIdx=0;
 
   }
 
@@ -292,25 +331,6 @@ var Editor=(function(){
     project=new Project(proj);
   }
 
-  function getLineInHtml(group,idx)
-  {
-    var l=document.getElementById(getIdFromPos(group,idx));
-    if(l==undefined)
-      return null;
-    if(l.children.length!=0) //assume the children is textarea
-      return l.children[0].value;
-    return l.textContent;
-  }
-
-  function setLineInHtml(group,idx,str)
-  {
-    var l=document.getElementById(getIdFromPos(group,idx));
-    if(l==undefined)
-      return false;
-    l.textContent=str;
-    l.myIsEditing=false;
-    return true;
-  }
 
   function updateLines(group)
   {
@@ -343,7 +363,13 @@ var Editor=(function(){
 
   function isModified()
   {
-    return modified;
+    return true;
+    return !(undoList.savedIdx==undoList.length);
+  }
+
+  function setUndoSaved()
+  {
+    undoList.savedIdx=undoList.length;
   }
 
   init();
@@ -353,14 +379,14 @@ var Editor=(function(){
     getLines:getLines,
     setGroupAttr:setGroupAttr,
     getGroupAttr:getGroupAttr,
+    modifyLine:modifyLine,
 
     linkProject:linkProject,
 
-    setLineInHtml:setLineInHtml,
-    getLineInHtml:getLineInHtml,
-
     updateLines:updateLines,
     isModified:isModified,
+
+    setUndoSaved:setUndoSaved,
 
     clearAll:clearAll,
   };
@@ -368,10 +394,13 @@ var Editor=(function(){
 
 var App=(function(){
 
+    var windowTitle="Node-Line Editor";
+
     function init()
     {
       $('#btn_open').on('click',buttonOpen);
       $('#btn_save').on('click',buttonSave);
+      $('#btn_close').on('click',buttonClose);
     }
 
     function showModalDialog(text,type,callback)
@@ -428,7 +457,6 @@ var App=(function(){
       }, 0);
     }
 
-    //has bug
     function showHint(text,color)
     {
       var hintbox=$('#hintBox');
@@ -443,48 +471,170 @@ var App=(function(){
       },4000);
     }
 
-    function buttonOpen()
+    function testSave(cb)
     {
-      Misc.chooseFile('#openFile',function(evt)
+      if(Editor.isModified())
       {
-        var fname=this.value;
-        comm.emit('c_sendCmd','cmd=parseText',fname,
-        function(ls,codec)
-        {
-          var proj=CurrentProject=new Project();
-          Editor.linkProject(proj);
-          proj.addGroup(fname,ls,codec,{});
-
-          if(configs.useNewsc=='ifexists' ||
-              configs.useNewsc=='always')
+        showModalDialog(CurLang.confirmSaveFile,'yesnocancel',function(sel){
+          if(sel==2 || sel==-1)
+            return;
+          else if(sel==0)
           {
-            var newScName=Misc.genNewScPath(fname);
-            if(Misc.existsFile(newScName))
-            {
-              comm.emit('c_sendCmd','cmd=parseText',newScName,
-              function(ls,codec)
-              {
-                CurrentProject.addGroup(newScName,ls,codec,{editable:true});
-                Editor.updateLines(1);
-              });
-            }
-            else if(configs.useNewsc=='always')
-            {
-              proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
-            }
+            buttonSave(cb);
           }
-
-          Editor.updateLines();
+          else
+          
+            cb();
         });
-      });
+      }
+      else
+        cb();
     }
 
-    function buttonSave()
+    function buttonOpen()
     {
-      showModalDialog(CurLang.confirmClose,'yesnocancel',function(id)
+      testSave(choose);
+
+      function choose()
+      {
+        Misc.chooseFile('#openFile',function (evt)
         {
-          console.log(id);
+          //删除本次事件监听器
+          setTimeout(function(){
+            var chooser = document.querySelector('#openFile');
+            chooser.removeEventListener('change',chooser.changeEve,false);
+          },1500);
+          var fname=this.value;
+          if(fname.slice(-4)=='.txt')
+          {
+          comm.emit('c_sendCmd','cmd=parseText',fname,
+          function(err,ls,codec)
+          {
+            if(err)
+            {
+              showHint(err);
+              return;
+            }
+            Editor.clearAll();
+            var proj=CurrentProject=new Project();
+            Editor.linkProject(proj);
+            proj.addGroup(fname,ls,codec,{});
+
+            if(configs.useNewsc=='ifexists' ||
+                configs.useNewsc=='always')
+            {
+              var newScName=Misc.genNewScPath(fname);
+              if(Misc.existsFile(newScName))
+              {
+                comm.emit('c_sendCmd','cmd=parseText',newScName,
+                function(err,ls,codec)
+                {
+                  if(err)
+                  {
+                    showHint(err);
+                    return;
+                  }
+                  CurrentProject.addGroup(newScName,ls,codec,{editable:true});
+                  Editor.updateLines(1);
+                });
+              }
+              else if(configs.useNewsc=='always')
+              {
+                proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
+              }
+            }
+
+            Editor.updateLines();
+            setWindowTitle(false);
+          });
+          }
+          else
+          {
+          comm.emit('c_sendCmd','cmd=parseProj',fname,function(err,proj){
+            if(err)
+            {
+              showHint(err);
+              return;
+            }
+            proj=CurrentProject=new Project(proj);
+            Editor.clearAll();
+            Editor.linkProject(proj);
+            Editor.updateLines();
+            setWindowTitle(false);
+          });
+          }
         });
+      }
+    }
+
+    function buttonSave(cb)
+    {
+      if(Editor.isModified())
+      {
+        var proj=CurrentProject;
+        proj.saveProject(function(err){
+          if(err)
+          {
+            showHint(err);
+            return;
+          }
+          showHint(Misc.format(CurLang.fileSaved,Misc.genProjName(proj.fileNames[0])));
+          Editor.setUndoSaved();
+          setWindowTitle(false);
+          if(proj.fileNames[1].indexOf('NewSc')!=-1 ||
+            (configs.useNewsc=='always' && proj.fileNames[0].slice(-5)!='.proj'))
+          {
+            comm.emit('c_sendCmd','cmd=saveText&name='+encodeURI(proj.fileNames[1])+'&codec='+proj.codecs[1],proj.lineGroups[1],function(err){
+              if(err)
+              {
+                setTimeout(function(){
+                  showHint(err);
+                },1000);
+                return;
+              }
+              if(typeof(cb)=='function')
+              {
+                cb();
+              }
+            });
+          }
+          else
+          {
+            if(typeof(cb)=='function')
+            {
+              cb();
+            }
+          }
+        });
+
+
+
+      }
+    }
+
+    function buttonClose()
+    {
+      testSave(close);
+
+      function close()
+      {
+        Editor.clearAll();
+        CurrentProject=new Project();
+        setWindowTitle(false);
+      }
+    }
+
+    function setWindowTitle(modified)
+    {
+      if(!CurrentProject || !CurrentProject.fileNames[0])
+        document.title=windowTitle;
+      else
+      {
+        if(!modified)
+          document.title=CurrentProject.fileNames[0]+' - '+windowTitle;
+        else
+          document.title=CurrentProject.fileNames[0]+' * - '+windowTitle;
+      }
     }
 
     init();
@@ -492,15 +642,22 @@ var App=(function(){
     return {
       showModalDialog:showModalDialog,
       showHint:showHint,
+      windowTitle:windowTitle,
+      setWindowTitle:setWindowTitle,
+      testSave:testSave,
     };
 })();
 
+var Window = require('nw.gui').Window.get();
 function Init()
 {
+  //设置主div高度
   $('.lines').css('height',window.innerHeight-20);
   $(window).on('resize',function(){
     $('.lines').css('height',window.innerHeight-20);
   });
+
+  //动画按钮效果
   var doc=$(document);
   doc.on('mousedown','.animButton',function(){
     $(this).css('background','rgba(0,64,255,0.8)');
@@ -508,6 +665,24 @@ function Init()
   doc.on('mouseup','.animButton',function(){
     $(this).css('background','rgba(0,64,255,0.5)');
   });
+
+  //全局按键绑定
+  doc.on('keydown','body',function(e){
+    if(e.keyCode==123)
+    {
+      Window.showDevTools();
+    }
+    else if(e.keyCode==116)
+      window.location.reload();
+  });
+
+  //全局事件绑定
+  Window.on('close',function(){
+    App.testSave(function(){Window.close(true)})
+  });
+
+  App.setWindowTitle();
+  CurrentProject=new Project();
 }
 
     /*var ls1=['abc','呵呵','wocao','测试测试'];

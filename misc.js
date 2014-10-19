@@ -94,9 +94,10 @@ var Misc=(function(){
 
     function chooseFile(name,cb)
     {
-      var chooser=$(name);
-      chooser.change(cb);
-      chooser.trigger('click');
+      var chooser = document.querySelector(name);
+      chooser.addEventListener('change',cb,false);
+      chooser.changeEve=cb;
+      chooser.click();
     }
 
     function genNewScPath(fname)
@@ -110,6 +111,15 @@ var Misc=(function(){
       var eles=fname.split('\\');
       var path=eles.slice(0,-1).join('\\');
       return path+'\\NewSc\\'+eles[eles.length-1];
+    }
+
+    function genProjName(fname)
+    {
+      if(fname.slice(-4)=='.txt')
+        return fname.slice(0,-4)+'.proj';
+      if(fname.slice(-5)=='.proj')
+        return fname;
+      return fname+'.proj';
     }
 
     function existsFile(fname)
@@ -126,6 +136,7 @@ var Misc=(function(){
         genNewScPath:genNewScPath,
         chooseFile:chooseFile,
         existsFile:existsFile,
+        genProjName:genProjName,
     };
 
 })();

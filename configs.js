@@ -1,11 +1,13 @@
 
 var Lang={};
 Lang.chn={
-  confirmClose: '文件已修改，是否保存？',
+  confirmSaveFile: '文件已修改，是否保存？',
   confirmYes: '是',
   confirmNo: '否',
   confirmOk:'确定',
   confirmCancel:'取消',
+
+  fileSaved:'{0} 已保存',
 
   regexpError: '正则表达式语法错误：',
 };

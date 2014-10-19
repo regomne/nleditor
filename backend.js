@@ -11,13 +11,13 @@ var Backend=(function(){
     if(codec===undefined)
     {
       if(data[0]==0xfe && data[1]==0xff)
-        codec='utf16be';
+      codec='utf16be';
       else if(data[0]==0xff && data[1]==0xfe)
-        codec='utf16le';
+      codec='utf16le';
       else if(data[0]==0xef && data[1]==0xbb && data[2]==0xbf)
-        codec='utf8';
+      codec='utf8';
       else
-        codec='ascii';
+      codec='ascii';
     }
 
     var str=iconv.decode(data,codec);
@@ -34,7 +34,25 @@ var Backend=(function(){
   }
   function genProjName(fname)
   {
-    return fname;
+    if(fname.slice(-4)=='.txt')
+      return fname.slice(0,-4)+'.proj';
+    if(fname.slice(-5)=='.proj')
+      return fname;
+    return fname+'.proj';
+  }
+  function mkdirs(dirpath)
+  {
+    var exists=path.existsSync(dirpath);
+    if(!exists)
+    {
+      mkdirs(path.dirname(dirpath));
+      fs.mkdirSync(dirname);
+    }
+  };
+
+  function throwError(evt,err)
+  {
+    comm.emit.apply(this,arguments);
   }
 
   function parseText(cmd,data,callback)
@@ -42,13 +60,20 @@ var Backend=(function(){
     var fname=genTextName(data);
     var codec=cmd.codec;
     if(codec && !iconv.encodingExists(codec))
-      throw "unknown codec";
+    {
+      throwError('s_parseText','unknown codec',{},callback);
+      return;
+    }
 
     fs.readFile(fname,function(err,data)
     {
-    	if(err) throw err;
+      if(err)
+      {
+        throwError('s_parseText',err.message,{},callback);
+        return;
+      }
       var readLs=splitTxtFile(data,codec);
-      comm.emit('s_parseText',readLs,callback);
+      comm.emit('s_parseText',null,readLs,callback);
       gLog('text:',fname,'parsed');
     });
   }
@@ -58,22 +83,36 @@ var Backend=(function(){
     var ls=data;
     var fname=cmd.name;
     if(fname===undefined)
-      throw "no file name";
+    {
+      throwError('s_saveText',"no file name",callback);
+      return;
+    }
     if(typeof(fname)!='string')
-      throw "file name must be unique";
+    {
+      throwError('s_saveText',"file name must be unique",callback);
+      return;
+    }
     fname=genTextName(fname);
 
     var codec=cmd.codec;
     if(codec && !iconv.encodingExists(codec))
-      throw 'unknown codec';
+    {
+      throwError('s_saveText','unknown codec',callback);
+      return;
+    }
     if(!codec)
       codec='utf8';
 
     var bin=iconv.encode(ls.join('\r\n'),codec);
+    mkdirs(path.dirname(fname));
     fs.writeFile(fname,bin,function(err)
     {
-      if(err) throw err;
-      comm.emit('s_saveText',callback);
+      if(err)
+      {
+        throwError('s_saveText',err.message,callback);
+        return;
+      }
+      comm.emit('s_saveText',null,callback);
       gLog('text:',fname,'saved');
     });
   }
@@ -81,12 +120,15 @@ var Backend=(function(){
   function parseProj(cmd,data,callback)
   {
     var fname=genProjName(data);
-
     fs.readFile(fname,function(err,data)
     {
-      if(err) throw err;
+      if(err)
+      {
+        throwError('s_parseProj',err.message,null,callback);
+        return;
+      }
       var proj=JSON.parse(iconv.decode(data,'utf16le'));
-      comm.emit('s_parseProj',proj,callback);
+      comm.emit('s_parseProj',null,proj,callback);
       gLog('proj:',fname,'parsed');
     });
   }
@@ -96,16 +138,27 @@ var Backend=(function(){
     var proj=data;
     var fname=cmd.name;
     if(fname===undefined)
-      throw "no file name";
+    {
+      throwError('s_saveProj',"no file name",callback);
+      return;
+    }
     if(typeof(fname)!='string')
-      throw "file name must be unique";
+    {
+      throwError('s_saveProj',"file name must be unique",callback);
+      return;
+    }
     fname=genProjName(fname);
+    mkdirs(path.dirname(fname));
 
     var bin=iconv.encode(JSON.stringify(proj),'utf16le');
     fs.writeFile(fname,bin,function(err)
     {
-      if(err) throw err;
-      comm.emit('s_saveProj',callback);
+      if(err)
+      {
+        throwError('s_saveProj',err.message,callback);
+        return;
+      }
+      comm.emit('s_saveProj',null,callback);
       gLog('proj:',fname,'saved');
     });
   }
@@ -122,18 +175,21 @@ var Backend=(function(){
 
     var dispTable={
       parseText:parseText,
+      parseProj:parseProj,
+      saveText:saveText,
+      saveProj:saveProj,
     };
 
     if(dispTable[cmd['cmd']]!=undefined)
     {
       try
       {
-        dispTable[cmd['cmd']](cmd,data,callback);
+      dispTable[cmd['cmd']](cmd,data,callback);
       }
       catch(e)
       {
-        gLog('processing',cmd['cmd'],'err occured: ',e);
-        comm.emit('s_error',e);
+      gLog('processing',cmd['cmd'],'err occured: ',e);
+      comm.emit('s_error',e);
       }
     }
     else
