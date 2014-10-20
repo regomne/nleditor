@@ -11,13 +11,13 @@ var Backend=(function(){
     if(codec===undefined)
     {
       if(data[0]==0xfe && data[1]==0xff)
-      codec='utf16be';
+        codec='utf16be';
       else if(data[0]==0xff && data[1]==0xfe)
-      codec='utf16le';
+        codec='utf16le';
       else if(data[0]==0xef && data[1]==0xbb && data[2]==0xbf)
-      codec='utf8';
+        codec='utf8';
       else
-      codec='ascii';
+        codec='utf8';
     }
 
     var str=iconv.decode(data,codec);
@@ -42,7 +42,7 @@ var Backend=(function(){
   }
   function mkdirs(dirpath)
   {
-    var exists=path.existsSync(dirpath);
+    var exists=fs.existsSync(dirpath);
     if(!exists)
     {
       mkdirs(path.dirname(dirpath));

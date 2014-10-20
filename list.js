@@ -156,6 +156,10 @@ var Editor=(function(){
   function editBlurProc() //"this" is not Editor
   {
     var pos=this.myPos;
+    var ts='';
+    for(var i=0;i<this.value.length;i++)
+      ts+=this.value.charCodeAt(i).toString()+' ';
+    console.log(ts);
     modifyLine(pos.group,pos.index,this.value);
   }
   function editKeyPressProc(e)
