@@ -95,6 +95,7 @@ var Misc=(function(){
     function chooseFile(name,cb)
     {
       var chooser = document.querySelector(name);
+      chooser.val='';
       chooser.addEventListener('change',cb,false);
       chooser.changeEve=cb;
       chooser.click();

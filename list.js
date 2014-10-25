@@ -155,13 +155,34 @@ var Editor=(function(){
 
   function editBlurProc() //"this" is not Editor
   {
+    function replaceSpace(s)
+    {
+      return s.replace('\xa0',' ');
+    }
     var pos=this.myPos;
-    var ts='';
-    for(var i=0;i<this.value.length;i++)
-      ts+=this.value.charCodeAt(i).toString()+' ';
-    console.log(ts);
-    modifyLine(pos.group,pos.index,this.value);
+    var newStr=replaceSpace(this.value);
+    var oldStr=lineGroups[pos.group][pos.index];
+    if(oldStr==newStr)
+    {
+      setLineInHtml(pos.group,pos.index,newStr);
+    }
+    else
+    {
+      modifyLine(pos.group,pos.index,newStr,true);
+      addUndoInfo(pos.group,pos.index,oldStr);
+    }
   }
+
+  function scrollToLine(destLine)
+  {
+    var ls=$('.lines');
+    var destTop=destLine[0].offsetTop-window.innerHeight/2+destLine.height();
+    if(ls.scrollTop()<destTop)
+    {
+      ls.animate({scrollTop:destTop},300);
+    }
+  }
+
   function editKeyPressProc(e)
   {
     if(e.which==13)
@@ -175,12 +196,7 @@ var Editor=(function(){
         if(nextLine)
         {
           //console.dir(nextLine);
-          var ls=$('.lines');
-          var destTop=nextLine[0].offsetTop-window.innerHeight/2+nextLine.height();
-          if(ls.scrollTop()<destTop)
-          {
-            ls.animate({scrollTop:destTop},300);
-          }
+          scrollToLine(nextLine);
           nextLine.click();
         }
       }
@@ -188,24 +204,24 @@ var Editor=(function(){
     }
   }
 
-  function paraClickProc()
-  {
-    var rect=$('#hlRect');
-    if(rect.length==0)
-    {
-      console.log('creating');
-      rect=$('<div id="hlRect"></div>');
-      $('.lines')[0].appendChild(rect[0]);
-    }
-    th=$(this);
-    rect.css({
-      height:th.height(),
-      width:th.width()-2,
-      display:"block",
-      left:th[0].offsetLeft,
-      top:th[0].offsetTop-2,
-    });
-  }
+  // function paraClickProc()
+  // {
+  //   var rect=$('#hlRect');
+  //   if(rect.length==0)
+  //   {
+  //     console.log('creating');
+  //     rect=$('<div id="hlRect"></div>');
+  //     $('.lines')[0].appendChild(rect[0]);
+  //   }
+  //   th=$(this);
+  //   rect.css({
+  //     height:th.height(),
+  //     width:th.width()-2,
+  //     display:"block",
+  //     left:th[0].offsetLeft,
+  //     top:th[0].offsetTop-2,
+  //   });
+  // }
 
   function setHtmlLineCount(cnt)
   {
@@ -277,8 +293,10 @@ var Editor=(function(){
       return false;
     l[0].textContent=str;
     l[0].myIsEditing=false;
-    if(isMod)
+    if(isMod===true)
       l.addClass('modifiedLine');
+    else if(isMod===false)
+      l.removeClass('modifiedLine');
     return true;
   }
 
@@ -307,16 +325,10 @@ var Editor=(function(){
     return project.groupAttrs[group];
   }
 
-  function modifyLine(group,idx,str)
+  function modifyLine(group,idx,str,isMod)
   {
-    var oldStr=project.lineGroups[group][idx];
-    if(oldStr==str)
-    {
-      setLineInHtml(group,idx,str,false);
-      return;
-    }
     project.lineGroups[group][idx]=str;
-    setLineInHtml(group,idx,str,true);
+    setLineInHtml(group,idx,str,isMod);
   }
 
   function clearAll()
@@ -373,7 +385,50 @@ var Editor=(function(){
 
   function setUndoSaved()
   {
-    undoList.savedIdx=undoList.length;
+    undoList.savedIdx=undoList.curIdx;
+    $('.modifiedLine').removeClass('modifiedLine');
+  }
+
+  function addUndoInfo(group,idx,str)
+  {
+    if(undoList.curIdx<undoList.length)
+    {
+      undoList=undoList.slice(0,undoList.curIdx).push({group:group,index:idx,string:str});
+    }
+    else
+      undoList.push({group:group,index:idx,string:str});
+
+    undoList.curIdx=undoList.length;
+  }
+
+  function undo()
+  {
+    if(undoList.curIdx<=0)
+      return;
+
+    var item=undoList[undoList.curIdx-1];
+    var destLine=$('#'+getIdFromPos(item.group,item.index));
+    if(destLine)
+    {
+      scrollToLine(destLine);
+      modifyLine(item.group,item.index,item.string,!destLine.hasClass('modifiedLine'));
+    }
+    undoList.curIdx--;
+  }
+
+  function redo()
+  {
+    if(undoList.curIdx>=undoList.length)
+      return;
+
+    var item=undoList[undoList.curIdx];
+    var destLine=$('#'+getIdFromPos(item.group,item.index));
+    if(destLine)
+    {
+      scrollToLine(destLine);
+      modifyLine(item.group,item.index,item.string,!destLine.hasClass('modifiedLine'));
+    }
+    undoList.curIdx++;
   }
 
   init();
