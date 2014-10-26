@@ -161,26 +161,26 @@ var Editor=(function(){
     }
     var pos=this.myPos;
     var newStr=replaceSpace(this.value);
-    var oldStr=lineGroups[pos.group][pos.index];
-    if(oldStr==newStr)
-    {
-      setLineInHtml(pos.group,pos.index,newStr);
-    }
-    else
-    {
-      modifyLine(pos.group,pos.index,newStr,true);
-      addUndoInfo(pos.group,pos.index,oldStr);
-    }
+    var oldStr=project.lineGroups[pos.group][pos.index];
+    // if(oldStr==newStr)
+    // {
+    //   setLineInHtml(pos.group,pos.index,newStr);
+    // }
+    // else
+    // {
+      addUndoInfo(pos.group,pos.index,{olds:oldStr,news:newStr});
+      modifyLine(pos.group,pos.index,newStr);
+    // }
   }
 
   function scrollToLine(destLine)
   {
     var ls=$('.lines');
     var destTop=destLine[0].offsetTop-window.innerHeight/2+destLine.height();
-    if(ls.scrollTop()<destTop)
-    {
+    // if(ls.scrollTop()<destTop)
+    // {
       ls.animate({scrollTop:destTop},300);
-    }
+    // }
   }
 
   function editKeyPressProc(e)
@@ -189,7 +189,7 @@ var Editor=(function(){
     {
       //console.dir(this);
       var pos=this.myPos;
-      editBlurProc.apply(this);
+      this.blur();
       if(pos.index<project.lineGroups[pos.group].length-1)
       {
         var nextLine=$('#'+getIdFromPos(pos.group,pos.index+1));
@@ -294,10 +294,18 @@ var Editor=(function(){
     l[0].textContent=str;
     l[0].myIsEditing=false;
     if(isMod===true)
-      l.addClass('modifiedLine');
+      l.addClass('modifiedStart');
     else if(isMod===false)
-      l.removeClass('modifiedLine');
+      l.removeClass('modifiedStart');
     return true;
+  }
+
+  function switchLineStatus(lineObj,status)
+  {
+    if(lineObj.hasClass(status))
+      lineObj.removeClass(status);
+    else
+      lineObj.addClass(status);
   }
 
   //public:
@@ -325,10 +333,11 @@ var Editor=(function(){
     return project.groupAttrs[group];
   }
 
-  function modifyLine(group,idx,str,isMod)
+  function modifyLine(group,idx,str)
   {
     project.lineGroups[group][idx]=str;
-    setLineInHtml(group,idx,str,isMod);
+    setLineInHtml(group,idx,str,true);
+    App.setWindowTitle(isModified());
   }
 
   function clearAll()
@@ -379,25 +388,23 @@ var Editor=(function(){
 
   function isModified()
   {
-    return true;
-    return !(undoList.savedIdx==undoList.length);
+    return !(undoList.savedIdx==undoList.curIdx);
   }
 
   function setUndoSaved()
   {
     undoList.savedIdx=undoList.curIdx;
-    $('.modifiedLine').removeClass('modifiedLine');
+    $('.modifiedSaved').removeClass('modifiedSaved');
   }
 
   function addUndoInfo(group,idx,str)
   {
-    if(undoList.curIdx<undoList.length)
-    {
-      undoList=undoList.slice(0,undoList.curIdx).push({group:group,index:idx,string:str});
-    }
-    else
-      undoList.push({group:group,index:idx,string:str});
+    $('#'+getIdFromPos(group,idx)).addClass('modifiedSaved');
 
+    if(undoList.curIdx<undoList.length)
+      undoList=undoList.slice(0,undoList.curIdx);
+
+    undoList.push({group:group,index:idx,string:str});
     undoList.curIdx=undoList.length;
   }
 
@@ -407,13 +414,14 @@ var Editor=(function(){
       return;
 
     var item=undoList[undoList.curIdx-1];
+    undoList.curIdx--;
     var destLine=$('#'+getIdFromPos(item.group,item.index));
-    if(destLine)
+    if(destLine.length!=0)
     {
       scrollToLine(destLine);
-      modifyLine(item.group,item.index,item.string,!destLine.hasClass('modifiedLine'));
+      modifyLine(item.group,item.index,item.string.olds);
+      switchLineStatus(destLine,'modifiedSaved');
     }
-    undoList.curIdx--;
   }
 
   function redo()
@@ -422,13 +430,14 @@ var Editor=(function(){
       return;
 
     var item=undoList[undoList.curIdx];
+    undoList.curIdx++;
     var destLine=$('#'+getIdFromPos(item.group,item.index));
-    if(destLine)
+    if(destLine.length!=0)
     {
       scrollToLine(destLine);
-      modifyLine(item.group,item.index,item.string,!destLine.hasClass('modifiedLine'));
+      modifyLine(item.group,item.index,item.string.news);
+      switchLineStatus(destLine,'modifiedSaved');
     }
-    undoList.curIdx++;
   }
 
   init();
@@ -446,8 +455,13 @@ var Editor=(function(){
     isModified:isModified,
 
     setUndoSaved:setUndoSaved,
+    undo:undo,
+    redo:redo,
 
     clearAll:clearAll,
+
+    //debug
+    getUndoList:function(){return undoList},
   };
 })();
 
@@ -727,12 +741,24 @@ function Init()
 
   //全局按键绑定
   doc.on('keydown','body',function(e){
-    if(e.keyCode==123)
+    console.log(e.keyCode);
+    if(e.keyCode==123) //F12
     {
       Window.showDevTools();
     }
-    else if(e.keyCode==116)
+    else if(e.keyCode==116) //F5
       window.location.reload();
+    else if(e.keyCode==90 && e.ctrlKey==true &&
+     e.altKey==false && e.shiftKey==false)
+    {
+      Editor.undo();
+    }
+    else if(e.keyCode==89 && e.ctrlKey==true &&
+     e.altKey==false && e.shiftKey==false)
+    {
+      Editor.redo();
+    }
+
   });
 
   //全局事件绑定

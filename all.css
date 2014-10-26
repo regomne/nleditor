@@ -53,6 +53,16 @@ body
 	background: rgba(0,180,60,0.4);
 }
 
+.modifiedStart
+{
+	color: rgb(100,10,10);
+}
+
+.modifiedSaved
+{
+	background: rgba(150,150,0,0.2);
+}
+
 #hlRect
 {
 	position: absolute;
