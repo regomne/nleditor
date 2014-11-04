@@ -90,6 +90,7 @@ var Editor=(function(){
   var project;
   //var curHighlightBox;
   var undoList;
+  var modifiedSave;
 
   function init()
   {
@@ -308,6 +309,16 @@ var Editor=(function(){
       lineObj.addClass(status);
   }
 
+  function copyUndoList(ul)
+  {
+    var newl=ul.slice(0,ul.curIdx);
+    newl.curIdx=ul.curIdx;
+    newl.savedIdx=ul.savedIdx;
+    if(newl.savedIdx>newl.curIdx)
+      newl.savedIdx=-1;
+    return newl;
+  }
+
   //public:
   function setLines(group,ls,attr)
   {
@@ -348,7 +359,7 @@ var Editor=(function(){
     undoList=[];
     undoList.savedIdx=0;
     undoList.curIdx=0;
-
+    modifiedSaved={};
   }
 
   function linkProject(proj)
@@ -395,6 +406,7 @@ var Editor=(function(){
   {
     undoList.savedIdx=undoList.curIdx;
     $('.modifiedSaved').removeClass('modifiedSaved');
+    modifiedSaved={};
   }
 
   function addUndoInfo(group,idx,str)
@@ -402,10 +414,13 @@ var Editor=(function(){
     $('#'+getIdFromPos(group,idx)).addClass('modifiedSaved');
 
     if(undoList.curIdx<undoList.length)
-      undoList=undoList.slice(0,undoList.curIdx);
+      undoList=copyUndoList(undoList);
 
     undoList.push({group:group,index:idx,string:str});
     undoList.curIdx=undoList.length;
+    if(modifiedSaved[idx]==undefined)
+      modifiedSaved[idx]=0;
+    modifiedSaved[idx]++;
   }
 
   function undo()
@@ -420,7 +435,13 @@ var Editor=(function(){
     {
       scrollToLine(destLine);
       modifyLine(item.group,item.index,item.string.olds);
-      switchLineStatus(destLine,'modifiedSaved');
+      //switchLineStatus(destLine,'modifiedSaved');
+      console.log(modifiedSaved[item.index]);
+      if(modifiedSaved[item.index]==undefined)
+        modifiedSaved[item.index]=0;
+      modifiedSaved[item.index]--;
+      if(modifiedSaved[item.index]==0 || modifiedSaved[item.index]==-1)
+        switchLineStatus(destLine,'modifiedSaved');
     }
   }
 
@@ -436,7 +457,11 @@ var Editor=(function(){
     {
       scrollToLine(destLine);
       modifyLine(item.group,item.index,item.string.news);
-      switchLineStatus(destLine,'modifiedSaved');
+      if(modifiedSaved[item.index]==undefined)
+        modifiedSaved[item.index]=0;
+      modifiedSaved[item.index]++;
+      if(modifiedSaved[item.index]==0 || modifiedSaved[item.index]==1)
+        switchLineStatus(destLine,'modifiedSaved');
     }
   }
 
@@ -462,6 +487,7 @@ var Editor=(function(){
 
     //debug
     getUndoList:function(){return undoList},
+    getModSaved:function(){return modifiedSaved},
   };
 })();
 
