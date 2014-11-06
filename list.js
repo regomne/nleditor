@@ -120,9 +120,9 @@ var Editor=(function(){
   {
     var start=0;
     var end=str.length;
-    for(var i=0;i<configs.settings.selectPattern.length;i++)
+    for(var i=0;i<Settings.selectPattern.length;i++)
     {
-      var rslt=configs.settings.selectPattern[i].exec(str);
+      var rslt=Settings.selectPattern[i].exec(str);
       if(rslt)
       {
         start=rslt.index+1;
@@ -141,15 +141,20 @@ var Editor=(function(){
       return;
     if(!this.myIsEditing)
     {
-      var selection=getQuotedText(this.textContent);
+      var pureText=this.textContent;
+      
       this.innerHTML='<textarea class="editText">'+this.innerHTML+'</textarea>';
 
       $('.editText').flexText();
       var te=$('.editText')[0];
       te.myPos=pos;
       te.focus();
-      te.selectionStart=selection.start;
-      te.selectionEnd=selection.end;
+      if(Settings.autoSelectText=true)
+      {
+        var selection=getQuotedText(pureText);
+        te.selectionStart=selection.start;
+        te.selectionEnd=selection.end;
+      }
       this.myIsEditing=true;
     }
   }
@@ -402,6 +407,11 @@ var Editor=(function(){
     return !(undoList.savedIdx==undoList.curIdx);
   }
 
+  function isOpenFile()
+  {
+    return project.lineGroups.length!=0;
+  }
+
   function setUndoSaved()
   {
     undoList.savedIdx=undoList.curIdx;
@@ -478,6 +488,7 @@ var Editor=(function(){
 
     updateLines:updateLines,
     isModified:isModified,
+    isOpenFile:isOpenFile,
 
     setUndoSaved:setUndoSaved,
     undo:undo,
@@ -619,8 +630,8 @@ var App=(function(){
             Editor.linkProject(proj);
             proj.addGroup(fname,ls,codec,{});
 
-            if(configs.settings.useNewsc=='ifexists' ||
-                configs.settings.useNewsc=='always')
+            if(Settings.useNewsc=='ifexists' ||
+                Settings.useNewsc=='always')
             {
               var newScName=Misc.genNewScPath(fname);
               if(Misc.existsFile(newScName))
@@ -637,7 +648,7 @@ var App=(function(){
                   Editor.updateLines(1);
                 });
               }
-              else if(configs.settings.useNewsc=='always')
+              else if(Settings.useNewsc=='always')
               {
                 proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
               }
@@ -668,7 +679,7 @@ var App=(function(){
 
     function buttonSave(cb)
     {
-      if(Editor.isModified())
+      if(Editor.isOpenFile() && Editor.isModified())
       {
         var proj=CurrentProject;
         proj.saveProject(function(err){
@@ -681,7 +692,7 @@ var App=(function(){
           Editor.setUndoSaved();
           setWindowTitle(false);
           if(proj.fileNames[1].indexOf('NewSc')!=-1 ||
-            (configs.settings.useNewsc=='always' && proj.fileNames[0].slice(-5)!='.proj'))
+            (Settings.useNewsc=='always' && proj.fileNames[0].slice(-5)!='.proj'))
           {
             comm.emit('c_sendCmd','cmd=saveText&name='+encodeURI(proj.fileNames[1])+'&codec='+proj.codecs[1],proj.lineGroups[1],function(err){
               if(err)
@@ -713,13 +724,13 @@ var App=(function(){
 
     function buttonClose()
     {
-      testSave(close);
-
-      function close()
+      if(Editor.isOpenFile())
       {
-        Editor.clearAll();
-        CurrentProject=new Project();
-        setWindowTitle(false);
+        testSave(function(){
+          Editor.clearAll();
+          CurrentProject=new Project();
+          setWindowTitle(false);
+        });
       }
     }
 
@@ -774,23 +785,32 @@ function Init()
     }
     else if(e.keyCode==116) //F5
       window.location.reload();
-    else if(e.keyCode==90 && e.ctrlKey==true &&
+    else if(e.keyCode==90 && e.ctrlKey==true && //Ctrl Z
      e.altKey==false && e.shiftKey==false)
     {
-      Editor.undo();
+      if(Editor.isOpenFile())
+        Editor.undo();
     }
-    else if(e.keyCode==89 && e.ctrlKey==true &&
+    else if(e.keyCode==89 && e.ctrlKey==true && //Ctrl Y
      e.altKey==false && e.shiftKey==false)
     {
-      Editor.redo();
+      if(Editor.isOpenFile())
+        Editor.redo();
     }
-
+    else if(e.keyCode==83 && e.ctrlKey==true && //Ctrl S
+     e.altKey==false && e.shiftKey==false)
+    {
+      $('#btn_save').click();
+    }
   });
 
   //全局事件绑定
   Window.on('close',function(){
     App.testSave(function(){Window.close(true)})
   });
+
+  //初始化各种配置
+  Settings=configs.getDefaultSettings();
 
   App.setWindowTitle();
   CurrentProject=new Project();
