@@ -10,26 +10,54 @@ Lang.chn={
   fileSaved:'{0} 已保存',
 
   regexpError: '正则表达式语法错误：',
+
+  setting_defaultOpenCodec: '文本默认打开编码',
+  setting_useNewsc1: '如果存在',
+  setting_useNewsc2: '总是使用',
+  setting_useNewsc3: '忽略',
+  setting_selectPattern: '文本自动选中',
 };
 var CurLang=Lang.chn;
 
 var configs=(function(){
-    var defaultConfigs={
-        defaultCodec:'936',
+    var defaultSettings={
+        defaultOpenCodec:'936',
         useNewsc:'ifexists',
         selectPattern:['「(.*)」','【(.*)】','（(.*)）',],
     };
 
-    var conf=Misc.clone(defaultConfigs);
-    for(var i=0;i<conf.selectPattern.length;i++)
+    var settingsDefines=[
+      {
+        type:'string',
+        name:'defaultOpenCodec',
+        defa:'936'
+      },
+      {
+        type:'combo',
+        name:'useNewsc',
+        data:['ifexists','always','no'],
+        defa:'ifexists'
+      },
+      {
+        type:'string',
+        name:'selectPattern',
+        defa:'「(.*)」\0【(.*)】\0（(.*)）',
+      },
+    ];
+
+    var settings=Misc.clone(defaultSettings);
+    for(var i=0;i<settings.selectPattern.length;i++)
     {
       try{
-        conf.selectPattern[i]=new RegExp(conf.selectPattern[i]);
+        settings.selectPattern[i]=new RegExp(settings.selectPattern[i]);
       }
       catch(e)
       {
         setTimeout(function(){App.showHint(CurLang.regexpError+'\n'+e.message)},1000);
       }
     }
-    return conf;
+
+    return {
+      settings:settings,
+    };
 })();

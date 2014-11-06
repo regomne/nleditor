@@ -120,9 +120,9 @@ var Editor=(function(){
   {
     var start=0;
     var end=str.length;
-    for(var i=0;i<configs.selectPattern.length;i++)
+    for(var i=0;i<configs.settings.selectPattern.length;i++)
     {
-      var rslt=configs.selectPattern[i].exec(str);
+      var rslt=configs.settings.selectPattern[i].exec(str);
       if(rslt)
       {
         start=rslt.index+1;
@@ -619,8 +619,8 @@ var App=(function(){
             Editor.linkProject(proj);
             proj.addGroup(fname,ls,codec,{});
 
-            if(configs.useNewsc=='ifexists' ||
-                configs.useNewsc=='always')
+            if(configs.settings.useNewsc=='ifexists' ||
+                configs.settings.useNewsc=='always')
             {
               var newScName=Misc.genNewScPath(fname);
               if(Misc.existsFile(newScName))
@@ -637,7 +637,7 @@ var App=(function(){
                   Editor.updateLines(1);
                 });
               }
-              else if(configs.useNewsc=='always')
+              else if(configs.settings.useNewsc=='always')
               {
                 proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
               }
@@ -681,7 +681,7 @@ var App=(function(){
           Editor.setUndoSaved();
           setWindowTitle(false);
           if(proj.fileNames[1].indexOf('NewSc')!=-1 ||
-            (configs.useNewsc=='always' && proj.fileNames[0].slice(-5)!='.proj'))
+            (configs.settings.useNewsc=='always' && proj.fileNames[0].slice(-5)!='.proj'))
           {
             comm.emit('c_sendCmd','cmd=saveText&name='+encodeURI(proj.fileNames[1])+'&codec='+proj.codecs[1],proj.lineGroups[1],function(err){
               if(err)
