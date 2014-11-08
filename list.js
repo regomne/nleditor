@@ -1,29 +1,4 @@
 ﻿
-/*
-config:
-{
-  colors:
-  {
-    
-  }
-  defalutCodec
-}
-*/
-
-/*
-project:
-{
-  fileNames:['','']
-  lineGroups:[[...],[...]]
-  groupAttrs:[{},{}]
-  linesMark:{}
-  codecs:['xxx']
-  
-  lastLine
-
-}
-*/
-
 var CurrentProject;
 var Project=function(proj)
 {
@@ -35,7 +10,6 @@ var Project=function(proj)
     this.groupAttrs=proj.groupAttrs;
     this.linesMark=proj.linesMark;
 
-    this.lastLine=proj.lastLine;
   }
   else
   {
@@ -44,7 +18,6 @@ var Project=function(proj)
     this.codecs=[];
     this.groupAttrs=[];
     this.linesMark={};
-    this.lastLine=-1;
   }
 }
 
@@ -516,21 +489,21 @@ var App=(function(){
     function showModalDialog(text,type,callback)
     {
       var cnt=1;
-      var btntext=[CurLang.confirmOk];
+      var btntext=[Lang.curLang.confirmOk];
       if(type=='yesno')
       {
         cnt=2;
-        btntext=[CurLang.confirmYes,CurLang.confirmNo];
+        btntext=[Lang.curLang.confirmYes,Lang.curLang.confirmNo];
       }
       else if(type=='okcancel')
       {
         cnt=2;
-        btntext=[CurLang.confirmOk,CurLang.confirmCancel];
+        btntext=[Lang.curLang.confirmOk,Lang.curLang.confirmCancel];
       }
       else if(type=='yesnocancel')
       {
         cnt=3;
-        btntext=[CurLang.confirmYes,CurLang.confirmNo,CurLang.confirmCancel];
+        btntext=[Lang.curLang.confirmYes,Lang.curLang.confirmNo,Lang.curLang.confirmCancel];
       }
       //else use ok
 
@@ -585,7 +558,7 @@ var App=(function(){
     {
       if(Editor.isModified())
       {
-        showModalDialog(CurLang.confirmSaveFile,'yesnocancel',function(sel){
+        showModalDialog(Lang.curLang.confirmSaveFile,'yesnocancel',function(sel){
           if(sel==2 || sel==-1)
             return;
           else if(sel==0)
@@ -688,7 +661,7 @@ var App=(function(){
             showHint(err);
             return;
           }
-          showHint(Misc.format(CurLang.fileSaved,Misc.genProjName(proj.fileNames[0])));
+          showHint(Misc.format(Lang.curLang.fileSaved,Misc.genProjName(proj.fileNames[0])));
           Editor.setUndoSaved();
           setWindowTitle(false);
           if(proj.fileNames[1].indexOf('NewSc')!=-1 ||

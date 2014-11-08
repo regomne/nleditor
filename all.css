@@ -90,6 +90,7 @@ body
 
 .menuButton
 {
+	float:left;
 	/*position: fixed;*/
 	opacity: 0.2;
 	transition: opacity 0.4s;
