@@ -19,8 +19,10 @@ Lang.chn={
   setting_useNewsc_2: '忽略',
   setting_autoSelectText: '自动选中文本',
   setting_selectPattern: '选中规则',
+
+  menuSettings: '设置',
 };
-Lang.curLang=Lang.chn;
+var CurLang=Lang.chn;
 
 var configs=(function(){
 
@@ -78,7 +80,7 @@ var configs=(function(){
         }
         catch(e)
         {
-          setTimeout(function(){App.showHint(Lang.curLang.regexpError+'\n'+e.message)},1000);
+          setTimeout(function(){App.showHint(CurLang.regexpError+'\n'+e.message)},1000);
         }
       }
       return settings;

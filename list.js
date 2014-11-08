@@ -489,21 +489,21 @@ var App=(function(){
     function showModalDialog(text,type,callback)
     {
       var cnt=1;
-      var btntext=[Lang.curLang.confirmOk];
+      var btntext=[CurLang.confirmOk];
       if(type=='yesno')
       {
         cnt=2;
-        btntext=[Lang.curLang.confirmYes,Lang.curLang.confirmNo];
+        btntext=[CurLang.confirmYes,CurLang.confirmNo];
       }
       else if(type=='okcancel')
       {
         cnt=2;
-        btntext=[Lang.curLang.confirmOk,Lang.curLang.confirmCancel];
+        btntext=[CurLang.confirmOk,CurLang.confirmCancel];
       }
       else if(type=='yesnocancel')
       {
         cnt=3;
-        btntext=[Lang.curLang.confirmYes,Lang.curLang.confirmNo,Lang.curLang.confirmCancel];
+        btntext=[CurLang.confirmYes,CurLang.confirmNo,CurLang.confirmCancel];
       }
       //else use ok
 
@@ -558,7 +558,7 @@ var App=(function(){
     {
       if(Editor.isModified())
       {
-        showModalDialog(Lang.curLang.confirmSaveFile,'yesnocancel',function(sel){
+        showModalDialog(CurLang.confirmSaveFile,'yesnocancel',function(sel){
           if(sel==2 || sel==-1)
             return;
           else if(sel==0)
@@ -661,7 +661,7 @@ var App=(function(){
             showHint(err);
             return;
           }
-          showHint(Misc.format(Lang.curLang.fileSaved,Misc.genProjName(proj.fileNames[0])));
+          showHint(Misc.format(CurLang.fileSaved,Misc.genProjName(proj.fileNames[0])));
           Editor.setUndoSaved();
           setWindowTitle(false);
           if(proj.fileNames[1].indexOf('NewSc')!=-1 ||
@@ -731,7 +731,8 @@ var App=(function(){
     };
 })();
 
-var Window = require('nw.gui').Window.get();
+var GuiNode=require('nw.gui');
+var OutWindow = GuiNode.Window.get();
 function Init()
 {
   //设置主div高度
@@ -754,7 +755,7 @@ function Init()
     console.log(e.keyCode);
     if(e.keyCode==123) //F12
     {
-      Window.showDevTools();
+      OutWindow.showDevTools();
     }
     else if(e.keyCode==116) //F5
       window.location.reload();
@@ -778,9 +779,10 @@ function Init()
   });
 
   //全局事件绑定
-  Window.on('close',function(){
-    App.testSave(function(){Window.close(true)})
+  OutWindow.on('close',function(){
+    App.testSave(function(){OutWindow.close(true)})
   });
+  Menu.init();
 
   //初始化各种配置
   Settings=configs.getDefaultSettings();
