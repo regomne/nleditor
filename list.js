@@ -1,5 +1,8 @@
-﻿
+﻿var GuiNode=require('nw.gui');
+var OutWindow = GuiNode.Window.get();
+
 var CurrentProject;
+
 var Project=function(proj)
 {
   if(proj instanceof Object)
@@ -448,8 +451,6 @@ var Editor=(function(){
     }
   }
 
-  init();
-
   return {
     setLines:setLines,
     getLines:getLines,
@@ -467,6 +468,7 @@ var Editor=(function(){
     undo:undo,
     redo:redo,
 
+    init:init,
     clearAll:clearAll,
 
     //debug
@@ -484,6 +486,54 @@ var App=(function(){
       $('#btn_open').on('click',buttonOpen);
       $('#btn_save').on('click',buttonSave);
       $('#btn_close').on('click',buttonClose);
+
+      //动画按钮效果
+      var doc=$(document);
+      doc.on('mousedown','.animButton',function(){
+        $(this).css('font-size','95%');
+      });
+      doc.on('mouseup','.animButton',function(){
+        $(this).css('font-size','');
+      });
+
+      //全局按键绑定
+      doc.on('keydown','body',function(e){
+        console.log(e.keyCode);
+        if(e.keyCode==123) //F12
+        {
+          OutWindow.showDevTools();
+        }
+        else if(e.keyCode==116) //F5
+          window.location.reload();
+        else if(e.keyCode==90 && e.ctrlKey==true && //Ctrl Z
+         e.altKey==false && e.shiftKey==false)
+        {
+          if(Editor.isOpenFile())
+            Editor.undo();
+        }
+        else if(e.keyCode==89 && e.ctrlKey==true && //Ctrl Y
+         e.altKey==false && e.shiftKey==false)
+        {
+          if(Editor.isOpenFile())
+            Editor.redo();
+        }
+        else if(e.keyCode==83 && e.ctrlKey==true && //Ctrl S
+         e.altKey==false && e.shiftKey==false)
+        {
+          $('#btn_save').click();
+        }
+      });
+
+      //复选框点击文本可选中
+      doc.on('click','.configLabelInButton',function(){
+        this.parentElement.children[0].click();
+      });
+
+      //全局事件绑定
+      OutWindow.on('close',function(){
+        App.testSave(function(){OutWindow.close(true)})
+      });
+
     }
 
     function showModalDialog(text,type,callback)
@@ -720,69 +770,30 @@ var App=(function(){
       }
     }
 
-    init();
-
     return {
       showModalDialog:showModalDialog,
       showHint:showHint,
       windowTitle:windowTitle,
       setWindowTitle:setWindowTitle,
       testSave:testSave,
+      init:init,
     };
 })();
 
-var GuiNode=require('nw.gui');
-var OutWindow = GuiNode.Window.get();
 function Init()
 {
+  //初始化对象
+  App.init();
+  Menu.init();
+  Editor.init();
+
   //设置主div高度
   $('.lines').css('height',window.innerHeight-20);
   $(window).on('resize',function(){
     $('.lines').css('height',window.innerHeight-20);
   });
 
-  //动画按钮效果
-  var doc=$(document);
-  doc.on('mousedown','.animButton',function(){
-    $(this).css('background','rgba(0,64,255,0.8)');
-  });
-  doc.on('mouseup','.animButton',function(){
-    $(this).css('background','rgba(0,64,255,0.5)');
-  });
 
-  //全局按键绑定
-  doc.on('keydown','body',function(e){
-    console.log(e.keyCode);
-    if(e.keyCode==123) //F12
-    {
-      OutWindow.showDevTools();
-    }
-    else if(e.keyCode==116) //F5
-      window.location.reload();
-    else if(e.keyCode==90 && e.ctrlKey==true && //Ctrl Z
-     e.altKey==false && e.shiftKey==false)
-    {
-      if(Editor.isOpenFile())
-        Editor.undo();
-    }
-    else if(e.keyCode==89 && e.ctrlKey==true && //Ctrl Y
-     e.altKey==false && e.shiftKey==false)
-    {
-      if(Editor.isOpenFile())
-        Editor.redo();
-    }
-    else if(e.keyCode==83 && e.ctrlKey==true && //Ctrl S
-     e.altKey==false && e.shiftKey==false)
-    {
-      $('#btn_save').click();
-    }
-  });
-
-  //全局事件绑定
-  OutWindow.on('close',function(){
-    App.testSave(function(){OutWindow.close(true)})
-  });
-  Menu.init();
 
   //初始化各种配置
   Settings=configs.getDefaultSettings();
@@ -791,15 +802,3 @@ function Init()
   CurrentProject=new Project();
 }
 
-    /*var ls1=['abc','呵呵','wocao','测试测试'];
-      var ls2=['abc</div><div>he','呵呵2','wocal','擦你妹'];
-      for(var i=0;i<100;i++)
-      {
-        ls1.push(ls1[((i*9)%7)&3]);
-        ls2.push(ls2[((i*13)%9)&3]);
-      }
-        var proj=CurrentProject=new Project();
-        Editor.linkProject(proj);
-        proj.addGroup('',ls1,1,{});
-        proj.addGroup('',ls2,1,{editable:true});
-        Editor.updateLines();*/

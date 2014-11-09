@@ -131,6 +131,42 @@ body
 	
 }
 
+.configBox
+{
+	/*position: relative;*/
+  background: #FFF;
+  padding: 20px;
+  padding-bottom: 45px;
+  width: auto;
+  margin: 20px auto;
+  /*text-align: center;*/
+ 	cursor: default !important;
+}
+#configOptions
+{
+	overflow: auto;
+}
+.configButton
+{
+	float:right;
+	/*text-align: center;*/
+	width:auto;
+	padding: 7px;
+	padding-left: 10px;
+	padding-right: 10px;
+
+}
+.configWithLabel
+{
+	font-size: 14px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+.configCheckbox
+{
+	vertical-align: middle;
+}
+
 .hintBox
 {
 	position: fixed;
