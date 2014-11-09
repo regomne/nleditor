@@ -8,7 +8,7 @@ var Menu=(function(){
     
     var menu1=new mn();
     menu1.append(new mni({label:CurLang.menuSettings, click:mnSettings}));
-    $('body').on('contextmenu',function(ev){
+    $('body').off('contextmenu').on('contextmenu',function(ev){
       //console.dir(ev);
       menu1.popup(ev.clientX,ev.clientY);
       return false;
@@ -27,8 +27,22 @@ var Menu=(function(){
 
     $('#configOK')[0].textContent=CurLang.confirmOK;
     $('#configCancel')[0].textContent=CurLang.confirmCancel;
+
+    $('#configOK').off('click').on('click',function(){
+      var conf=configs.saveConfigsFromHtml(sets,'setting');
+      if(conf)
+      {
+        Settings=conf;
+        configs.reloadSetting(Settings);
+        $.magnificPopup.close();
+      }
+    });
+    $('#configCancel').off('click').on('click',function(){
+      $.magnificPopup.close();
+    });
+
     optsDiv[0].textContent='';
-    optsDiv.append($(configs.generateSettingHtml(sets,Settings)));
+    optsDiv.append($(configs.generateConfigHtml(sets,Settings,'setting')));
     $.magnificPopup.open({
       items: {
         src: '#configBox'

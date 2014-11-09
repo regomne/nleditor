@@ -67,10 +67,11 @@ var Editor=(function(){
   //var curHighlightBox;
   var undoList;
   var modifiedSave;
+  var autoSaverId;
 
   function init()
   {
-    var doc=$(document);
+    var doc=$('.lines');
     doc.on('click','.line1',lineClickProc);
     doc.on('blur','.editText',editBlurProc);
     doc.on('keypress','.editText',editKeyPressProc);
@@ -125,7 +126,7 @@ var Editor=(function(){
       var te=$('.editText')[0];
       te.myPos=pos;
       te.focus();
-      if(Settings.autoSelectText=true)
+      if(Settings.autoSelectText==true)
       {
         var selection=getQuotedText(pureText);
         te.selectionStart=selection.start;
@@ -325,11 +326,35 @@ var Editor=(function(){
     return project.groupAttrs[group];
   }
 
+  function resetAutoSaver(interval)
+  {
+    if(autoSaverId!=undefined)
+      clearInterval(autoSaverId);
+    if(interval!=0)
+    {
+      autoSaverId=setInterval(function(){
+        if(!isModified())
+        {
+          clearInterval(autoSaverId);
+          autoSaverId=undefined;
+        }
+        else
+        {
+          App.buttonSave();
+        }
+      },interval*1000);
+    }
+  }
+
   function modifyLine(group,idx,str)
   {
     project.lineGroups[group][idx]=str;
     setLineInHtml(group,idx,str,true);
     App.setWindowTitle(isModified());
+    if(autoSaverId==undefined && Settings.autoSaveInterval!=0 && isModified())
+    {
+      resetAutoSaver(Settings.autoSaveInterval);
+    }
   }
 
   function clearAll()
@@ -341,6 +366,11 @@ var Editor=(function(){
     undoList.savedIdx=0;
     undoList.curIdx=0;
     modifiedSaved={};
+    if(autoSaverId!=undefined)
+    {
+      clearInterval(autoSaverId);
+      autoSaverId=undefined;
+    }
   }
 
   function linkProject(proj)
@@ -471,6 +501,8 @@ var Editor=(function(){
     init:init,
     clearAll:clearAll,
 
+    resetAutoSaver:resetAutoSaver,
+
     //debug
     getUndoList:function(){return undoList},
     getModSaved:function(){return modifiedSaved},
@@ -486,6 +518,8 @@ var App=(function(){
       $('#btn_open').on('click',buttonOpen);
       $('#btn_save').on('click',buttonSave);
       $('#btn_close').on('click',buttonClose);
+      $('#btn_undo').on('click',Editor.undo);
+      $('#btn_redo').on('click',Editor.redo);
 
       //动画按钮效果
       var doc=$(document);
@@ -525,13 +559,13 @@ var App=(function(){
       });
 
       //复选框点击文本可选中
-      doc.on('click','.configLabelInButton',function(){
+      $('.configBox').on('click','.configLabelInButton',function(){
         this.parentElement.children[0].click();
       });
 
       //全局事件绑定
       OutWindow.on('close',function(){
-        App.testSave(function(){OutWindow.close(true)})
+        testSave(function(){OutWindow.close(true)})
       });
 
     }
@@ -571,7 +605,7 @@ var App=(function(){
       $('#confirmTextBox')[0].textContent=text;
 
       var userSelect=-1;
-      $('.confirmButton').on('click',function(evt){
+      $('.confirmButton').off('click').on('click',function(evt){
         userSelect=this.id.slice(-1);
         $.magnificPopup.close();
       });
@@ -776,6 +810,7 @@ var App=(function(){
       windowTitle:windowTitle,
       setWindowTitle:setWindowTitle,
       testSave:testSave,
+      buttonSave:buttonSave,
       init:init,
     };
 })();

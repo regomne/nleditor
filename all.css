@@ -166,6 +166,10 @@ body
 {
 	vertical-align: middle;
 }
+.badConfig
+{
+	background: rgba(255,0,0,0.5);
+}
 
 .hintBox
 {

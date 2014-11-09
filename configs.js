@@ -31,11 +31,12 @@ var configs=(function(){
         type:'number',
         name:'autoSaveInterval',
         defa:120,
+        //valid:function(){}
       },
       {
         type:'string',
         name:'defaultOpenCodec',
-        defa:'936'
+        defa:'936',
       },
       {
         type:'combo',
@@ -86,15 +87,15 @@ var configs=(function(){
       return settings;
     }
 
-    function generateSettingHtml(defs,curs)
+    function generateConfigHtml(defs,curs,confType)
     {
       function getInstructionText(name)
       {
-        return Misc.encodeHtml(CurLang['setting_'+name] || name);
+        return Misc.encodeHtml(CurLang[confType+'_'+name] || name);
       }
       function getSubInstructionText(name,id)
       {
-        return Misc.encodeHtml(CurLang['setting_'+name+'_'+id] || name);
+        return Misc.encodeHtml(CurLang[confType+'_'+name+'_'+id] || name);
       }
       var optstr='';
       for(var i=0;i<defs.length;i++)
@@ -105,21 +106,21 @@ var configs=(function(){
         case 'string':
         case 'number':
           var s='<div class="configWithLabel"><span>'+getInstructionText(opt.name)+
-            Misc.format('<input type="text" id="settingInDialog_{0}" value="{1}" />',i,Misc.encodeHtml(curs[opt.name]))+
+            Misc.format('<input type="text" id="{0}InDialog_{1}" value="{2}" />',confType,i,Misc.encodeHtml(curs[opt.name]))+
             '</span></div>';
           optstr+=s;
           break;
         case 'patterns':
           var ptr=curs[opt.name].map(function(ele){return ele.source}).join('\\0');
           var s='<div class="configWithLabel"><span>'+getInstructionText(opt.name)+
-            Misc.format('<input type="text" id="settingInDialog_{0}" value="{1}" />',i,Misc.encodeHtml(ptr))+
+            Misc.format('<input type="text" id="{0}InDialog_{1}" value="{2}" />',confType,i,Misc.encodeHtml(ptr))+
             '</span></div>';
           optstr+=s;
           break;
         case 'bool':
           var isCh=curs[opt.name] ? 'checked="1"' : '';
           var s='<div class="configWithLabel"><span>'+
-            Misc.format('<input type="checkbox" class="configCheckbox" id="settingInDialog_{0}" {1} /><span class="configLabelInButton">',i,isCh)+
+            Misc.format('<input type="checkbox" class="configCheckbox" id="{0}InDialog_{1}" {2} /><span class="configLabelInButton">',confType,i,isCh)+
             getInstructionText(opt.name)+
             '</span></span></div>';
           optstr+=s;
@@ -131,21 +132,80 @@ var configs=(function(){
             subops+=Misc.format('<option value="{0}">{1}</option>',Misc.encodeHtml(opt.data[j]),getSubInstructionText(opt.name,j));
           }
           var s='<div class="configWithLabel"><span>'+getInstructionText(opt.name)+
-            Misc.format('<select id=settingInDialog_{0}>',i)+subops+'</select></span></div>';
+            Misc.format('<select id={0}InDialog_{1}>',confType,i)+subops+'</select></span></div>';
           optstr+=s;
           break;
         default:
-          console.log('unknown Setting defines');
+          throw "unk conf define"+opt.type;
         }
       }
 
       return optstr;
     }
 
+    function saveConfigsFromHtml(defs,confType)
+    {
+      var confs={};
+      var allErr=false;
+      var optHtml=$('.configWithLabel');
+      for(var i=0;i<defs.length;i++)
+      {
+        var opt=defs[i];
+        var ele=$(Misc.format('#{0}InDialog_{1}',confType,i));
+        if(ele.length==0)
+        {
+          throw "no element in html: "+i;
+        }
+        var err=false;
+        switch(opt.type)
+        {
+        case 'string':
+          confs[opt.name]=ele[0].value;
+          break;
+        case 'number':
+          confs[opt.name]=parseInt(ele[0].value) || 0;
+          break;
+        case 'bool':
+          confs[opt.name]=ele[0].checked;
+          break;
+        case 'combo':
+          confs[opt.name]=opt.data[ele[0].selectedIndex];
+          break;
+        case 'patterns':
+          var pat=ele[0].value.split('\\0');
+          try{
+            confs[opt.name]=pat.map(function(el){
+              return new RegExp(el);
+            });
+          }
+          catch(e)
+          {
+            $(optHtml[i]).addClass('badConfig');
+            err=true;
+            allErr=true;
+          }
+          break;
+        }
+        if(!err)
+          $(optHtml[i]).removeClass('badConfig');
+      }
+      if(allErr)
+        return null;
+      return confs;
+    }
+
+    function reloadSetting(sett)
+    {
+      if(Editor.isOpenFile() && Editor.isModified())
+        Editor.resetAutoSaver(sett.autoSaveInterval);
+    }
+
     return {
       getSettingDefines:function(){return settingsDefines},
       getDefaultSettings:getDefaultSettings,
-      generateSettingHtml:generateSettingHtml,
+      generateConfigHtml:generateConfigHtml,
+      saveConfigsFromHtml:saveConfigsFromHtml,
+      reloadSetting:reloadSetting,
     };
 })();
 
