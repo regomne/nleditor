@@ -558,6 +558,21 @@ var App=(function(){
         }
       });
 
+      function noDefault(e){
+        e.preventDefault();
+      }
+      doc.on({
+        dragleave:noDefault,
+        drop:noDefault,
+        dragenter:noDefault,
+        dragover:noDefault,
+      });
+
+      $('.lines')[0].ondrop=function(e){
+        e.preventDefault();
+        console.dir(e);
+      };
+
       //复选框点击文本可选中
       $('.configBox').on('click','.configLabelInButton',function(){
         this.parentElement.children[0].click();
