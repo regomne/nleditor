@@ -570,7 +570,20 @@ var App=(function(){
 
       $('.lines')[0].ondrop=function(e){
         e.preventDefault();
-        console.dir(e);
+        if(e.dataTransfer.files.length<0)
+          return;
+        var fname=e.dataTransfer.files[0].path;
+        testSave(function()
+        {
+          if(fname.slice(-4)=='.txt')
+          {
+            openTxt(fname);
+          }
+          else
+          {
+            openProj(fname);
+          }
+        });
       };
 
       //复选框点击文本可选中
@@ -673,6 +686,73 @@ var App=(function(){
         cb();
     }
 
+    function openTxt(fname)
+    {
+      comm.emit('c_sendCmd','cmd=parseText',fname,
+      function(err,ls,codec)
+      {
+        if(err)
+        {
+          showHint(err);
+          return;
+        }
+        Editor.clearAll();
+        var proj=CurrentProject=new Project();
+        Editor.linkProject(proj);
+        proj.addGroup(fname,ls,codec,{});
+
+        if(Settings.useNewsc=='ifexists' ||
+            Settings.useNewsc=='always')
+        {
+          var newScName=Misc.genNewScPath(fname);
+          if(Misc.existsFile(newScName))
+          {
+            comm.emit('c_sendCmd','cmd=parseText',newScName,
+            function(err,ls,codec)
+            {
+              if(err)
+              {
+                showHint(err);
+                return;
+              }
+              CurrentProject.addGroup(newScName,ls,codec,{editable:true});
+              Editor.updateLines(1);
+            });
+          }
+          else if(Settings.useNewsc=='always' || Settings.autoDuplicateGroup)
+          {
+            proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
+          }
+        }
+        else
+        {
+          if(Settings.autoDuplicateGroup)
+          {
+            proj.addGroup('',ls.slice(0),codec,{editable:true});
+          }
+        }
+
+        Editor.updateLines();
+        setWindowTitle(false);
+      });
+    }
+
+    function openProj(fname)
+    {
+      comm.emit('c_sendCmd','cmd=parseProj',fname,function(err,proj){
+        if(err)
+        {
+          showHint(err);
+          return;
+        }
+        proj=CurrentProject=new Project(proj);
+        Editor.clearAll();
+        Editor.linkProject(proj);
+        Editor.updateLines();
+        setWindowTitle(false);
+      });
+    }
+
     function buttonOpen()
     {
       testSave(choose);
@@ -689,61 +769,11 @@ var App=(function(){
           var fname=this.value;
           if(fname.slice(-4)=='.txt')
           {
-          comm.emit('c_sendCmd','cmd=parseText',fname,
-          function(err,ls,codec)
-          {
-            if(err)
-            {
-              showHint(err);
-              return;
-            }
-            Editor.clearAll();
-            var proj=CurrentProject=new Project();
-            Editor.linkProject(proj);
-            proj.addGroup(fname,ls,codec,{});
-
-            if(Settings.useNewsc=='ifexists' ||
-                Settings.useNewsc=='always')
-            {
-              var newScName=Misc.genNewScPath(fname);
-              if(Misc.existsFile(newScName))
-              {
-                comm.emit('c_sendCmd','cmd=parseText',newScName,
-                function(err,ls,codec)
-                {
-                  if(err)
-                  {
-                    showHint(err);
-                    return;
-                  }
-                  CurrentProject.addGroup(newScName,ls,codec,{editable:true});
-                  Editor.updateLines(1);
-                });
-              }
-              else if(Settings.useNewsc=='always')
-              {
-                proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
-              }
-            }
-
-            Editor.updateLines();
-            setWindowTitle(false);
-          });
+          openTxt(fname);
           }
           else
           {
-          comm.emit('c_sendCmd','cmd=parseProj',fname,function(err,proj){
-            if(err)
-            {
-              showHint(err);
-              return;
-            }
-            proj=CurrentProject=new Project(proj);
-            Editor.clearAll();
-            Editor.linkProject(proj);
-            Editor.updateLines();
-            setWindowTitle(false);
-          });
+            openProj(fname);
           }
         });
       }

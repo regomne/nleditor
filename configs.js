@@ -12,6 +12,7 @@ Lang.chn={
   regexpError: '正则表达式语法错误：',
 
   setting_autoSaveInterval: '自动保存间隔(单位秒，0为不自动)：',
+  setting_autoDuplicateGroup: '自动复制原文文本',
   setting_defaultOpenCodec: '文本默认打开编码：',
   setting_useNewsc: '是否使用NewSc目录：',
   setting_useNewsc_0: '如果存在',
@@ -32,6 +33,11 @@ var configs=(function(){
         name:'autoSaveInterval',
         defa:120,
         //valid:function(){}
+      },
+      {
+        type:'bool',
+        name:'autoDuplicateGroup',
+        defa:'true'
       },
       {
         type:'string',
