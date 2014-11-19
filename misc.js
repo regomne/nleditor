@@ -94,10 +94,8 @@ var Misc=(function(){
 
     function chooseFile(name,cb)
     {
-      var chooser = document.querySelector(name);
-      chooser.val='';
-      chooser.addEventListener('change',cb,false);
-      chooser.changeEve=cb;
+      var chooser=$(name);
+      chooser.off('change').on('change',cb);
       chooser.click();
     }
 

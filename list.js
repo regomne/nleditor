@@ -30,6 +30,19 @@ Project.prototype.addGroup=function(fname,lines,codec,attr)
   this.lineGroups.push(lines);
   this.codecs.push(codec);
   this.groupAttrs.push(attr);
+  return this.fileNames.length-1;
+}
+
+Project.prototype.duplicateGroup=function(group,fname)
+{
+  var ls=this.lineGroups[group];
+  if(ls==undefined)
+  {
+    throw "group index out of range";
+    return;
+  }
+  return this.addGroup((fname || ''),ls.slice(0),
+    this.codecs[group],this.groupAttrs[group]);
 }
 
 Project.prototype.setGroup=function(group,fname,lines,codec,attr)
@@ -38,6 +51,11 @@ Project.prototype.setGroup=function(group,fname,lines,codec,attr)
   this.lineGroups[group]=lines;
   this.codecs[group]=codec;
   this.groupAttrs[group]=attr;
+}
+
+Project.prototype.getGroupCount=function()
+{
+  return this.fileNames.length;
 }
 
 Project.prototype.saveProject=function(cb)
@@ -72,7 +90,7 @@ var Editor=(function(){
   function init()
   {
     var doc=$('.lines');
-    doc.on('click','.line1',lineClickProc);
+    doc.on('click','.para',lineClickProc);
     doc.on('blur','.editText',editBlurProc);
     doc.on('keypress','.editText',editKeyPressProc);
     //doc.on('click','.para',paraClickProc);
@@ -111,16 +129,19 @@ var Editor=(function(){
     return {start:start,end:end};
   }
 
-  function lineClickProc() //"this" is not Editor
+  function lineClickProc(e) //"this" is not Editor
   {
-    var pos=getPosFromId(this.id);
+    var ele=e.target;
+    if(ele.className.slice(0,4)!='line')
+      return;
+    var pos=getPosFromId(ele.id);
     if(!project.groupAttrs[pos.group].editable)
       return;
-    if(!this.myIsEditing)
+    if(!ele.myIsEditing)
     {
-      var pureText=this.textContent;
+      var pureText=ele.textContent;
       
-      this.innerHTML='<textarea class="editText">'+this.innerHTML+'</textarea>';
+      ele.innerHTML='<textarea class="editText">'+ele.innerHTML+'</textarea>';
 
       $('.editText').flexText();
       var te=$('.editText')[0];
@@ -132,7 +153,7 @@ var Editor=(function(){
         te.selectionStart=selection.start;
         te.selectionEnd=selection.end;
       }
-      this.myIsEditing=true;
+      ele.myIsEditing=true;
     }
   }
 
@@ -516,6 +537,7 @@ var App=(function(){
     function init()
     {
       $('#btn_open').on('click',buttonOpen);
+      $('#btn_duplicate').on('click',buttonDuplicate);
       $('#btn_save').on('click',buttonSave);
       $('#btn_close').on('click',buttonClose);
       $('#btn_undo').on('click',Editor.undo);
@@ -719,9 +741,13 @@ var App=(function(){
               Editor.updateLines(1);
             });
           }
-          else if(Settings.useNewsc=='always' || Settings.autoDuplicateGroup)
+          else if(Settings.useNewsc=='always')
           {
             proj.addGroup(newScName,ls.slice(0),codec,{editable:true});
+          }
+          else if(Settings.autoDuplicateGroup)
+          {
+            proj.addGroup('',ls.slice(0),codec,{editable:true});
           }
         }
         else
@@ -761,21 +787,27 @@ var App=(function(){
       {
         Misc.chooseFile('#openFile',function (evt)
         {
-          //删除本次事件监听器
-          setTimeout(function(){
-            var chooser = document.querySelector('#openFile');
-            chooser.removeEventListener('change',chooser.changeEve,false);
-          },1500);
           var fname=this.value;
           if(fname.slice(-4)=='.txt')
           {
-          openTxt(fname);
+            openTxt(fname);
           }
           else
           {
             openProj(fname);
           }
+          $(this).val('');
         });
+      }
+    }
+
+    function buttonDuplicate()
+    {
+      var proj=CurrentProject;
+      if(Editor.isOpenFile() && proj.fileNames.length>=1)
+      {
+        proj.duplicateGroup(proj.getGroupCount()-1);
+        Editor.updateLines(proj.getGroupCount()-1);
       }
     }
 
