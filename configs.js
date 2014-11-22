@@ -21,6 +21,10 @@ Lang.chn={
   setting_autoSelectText: '自动选中文本',
   setting_selectPattern: '选中规则：',
 
+  uiSetting_useBgfile:'是否使用背景图片',
+  uiSetting_bgfile:'背景图片路径：',
+  uiSetting_bgcolor:'背景颜色',
+
   menuSettings: '设置',
 };
 var CurLang=Lang.chn;
@@ -60,6 +64,24 @@ var configs=(function(){
         type:'patterns',
         name:'selectPattern',
         defa:'「(.*)」\\0【(.*)】\\0（(.*)）',
+      },
+    ];
+
+    var uiSettingsDefines=[
+      {
+        type:'bool',
+        name:'useBgfile',
+        defa:true,
+      },
+      {
+        type:'file',
+        name:'bgfile',
+        defa:'bkgnd.jpg',
+      },
+      {
+        type:'color',
+        name:'bgcolor',
+        defa:'white',
       },
     ];
 
