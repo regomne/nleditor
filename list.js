@@ -92,7 +92,7 @@ var Editor=(function(){
     var doc=$('.lines');
     doc.on('click','.para',lineClickProc);
     doc.on('blur','.editText',editBlurProc);
-    doc.on('keypress','.editText',editKeyPressProc);
+    doc.on('keydown','.editText',editKeyPressProc);
     //doc.on('click','.para',paraClickProc);
 
     clearAll();
@@ -159,6 +159,8 @@ var Editor=(function(){
 
   function editBlurProc() //"this" is not Editor
   {
+    if(this.noModify)
+      return;
     function replaceSpace(s)
     {
       return s.replace('\xa0',' ');
@@ -189,7 +191,8 @@ var Editor=(function(){
 
   function editKeyPressProc(e)
   {
-    if(e.which==13)
+    //console.dir(e);
+    if(e.which==13) //enter
     {
       //console.dir(this);
       var pos=this.myPos;
@@ -205,6 +208,12 @@ var Editor=(function(){
         }
       }
       return false;
+    }
+    else if(e.which==27)
+    {
+      var pos=this.myPos;
+      this.noModify=true;
+      setLineInHtml(pos.group,pos.index,project.lineGroups[pos.group][pos.index]);
     }
   }
 
@@ -554,7 +563,7 @@ var App=(function(){
 
       //全局按键绑定
       doc.on('keydown','body',function(e){
-        console.log(e.keyCode);
+        //console.log(e.keyCode);
         if(e.keyCode==123) //F12
         {
           OutWindow.showDevTools();
