@@ -23,9 +23,11 @@ Lang.chn={
 
   uiSetting_useBgfile:'是否使用背景图片',
   uiSetting_bgfile:'背景图片路径：',
+  uiSetting_autoResizeByImage:'自动根据背景图片调节窗口尺寸',
   uiSetting_bgcolor:'背景颜色',
 
   menuSettings: '设置',
+  menuUiSettings: '视图设置',
 };
 var CurLang=Lang.chn;
 
@@ -79,6 +81,11 @@ var configs=(function(){
         defa:'bkgnd.jpg',
       },
       {
+        type:'bool',
+        name:'autoResizeByImage',
+        defa:'true',
+      },
+      {
         type:'color',
         name:'bgcolor',
         defa:'white',
@@ -112,6 +119,12 @@ var configs=(function(){
           setTimeout(function(){App.showHint(CurLang.regexpError+'\n'+e.message)},1000);
         }
       }
+      return settings;
+    }
+
+    function getDefaultUiSettings()
+    {
+      var settings=getDefault(uiSettingsDefines);
       return settings;
     }
 
@@ -222,20 +235,28 @@ var configs=(function(){
       return confs;
     }
 
-    function reloadSetting(sett)
+    function applySetting(sett)
     {
       if(Editor.isOpenFile() && Editor.isModified())
         Editor.resetAutoSaver(sett.autoSaveInterval);
     }
 
+    function applyUiSetting(sett)
+    {
+
+    }
+
     return {
       getSettingDefines:function(){return settingsDefines},
+      getUiSettingDefines:function(){return uiSettingsDefines},
       getDefaultSettings:getDefaultSettings,
+      getDefaultUiSettings:getDefaultUiSettings,
       generateConfigHtml:generateConfigHtml,
       saveConfigsFromHtml:saveConfigsFromHtml,
-      reloadSetting:reloadSetting,
+      applySetting:applySetting,
+      applyUiSetting:applyUiSetting,
     };
 })();
 
-var Settings;
-var UISettings;
+var Settings=configs.getDefaultSettings();
+var UISettings=configs.getDefaultUiSettings();

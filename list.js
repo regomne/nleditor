@@ -82,7 +82,6 @@ var Editor=(function(){
 
   //private:
   var project;
-  //var curHighlightBox;
   var undoList;
   var modifiedSave;
   var autoSaverId;
@@ -913,11 +912,7 @@ function Init()
   $(window).on('resize',function(){
     $('.lines').css('height',window.innerHeight-20);
   });
-
-
-
-  //初始化各种配置
-  Settings=configs.getDefaultSettings();
+  
 
   App.setWindowTitle();
   CurrentProject=new Project();

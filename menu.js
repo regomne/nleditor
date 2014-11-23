@@ -8,6 +8,7 @@ var Menu=(function(){
     
     var menu1=new mn();
     menu1.append(new mni({label:CurLang.menuSettings, click:mnSettings}));
+    menu1.append(new mni({label:CurLang.menuUiSettings,click:mnUiSettings}));
     $('body').off('contextmenu').on('contextmenu',function(ev){
       //console.dir(ev);
       menu1.popup(ev.clientX,ev.clientY);
@@ -33,7 +34,7 @@ var Menu=(function(){
       if(conf)
       {
         Settings=conf;
-        configs.reloadSetting(Settings);
+        configs.applySetting(Settings);
         $.magnificPopup.close();
       }
     });
@@ -55,6 +56,49 @@ var Menu=(function(){
       //   callback(userSelect);
       // }},
     }, 0);
+  }
+
+  function mnUiSettings()
+  {
+    var sets=configs.getUiSettingDefines();
+    var optsDiv=$('#configOptions');
+    var boxDiv=$('.configBox');
+
+    var maxw=window.innerWidth*0.7;
+    boxDiv.css('max-width',maxw>500?500:maxw);
+    optsDiv.css('max-height',window.innerWidth*0.8)
+
+    $('#configOK')[0].textContent=CurLang.confirmOK;
+    $('#configCancel')[0].textContent=CurLang.confirmCancel;
+
+    $('#configOK').off('click').on('click',function(){
+      var conf=configs.saveConfigsFromHtml(sets,'uiSetting');
+      if(conf)
+      {
+        UISettings=conf;
+        configs.applyUiSetting(conf);
+        $.magnificPopup.close();
+      }
+    });
+    $('#configCancel').off('click').on('click',function(){
+      $.magnificPopup.close();
+    });
+
+    optsDiv[0].textContent='';
+    optsDiv.append($(configs.generateConfigHtml(sets,Settings,'setting')));
+    $.magnificPopup.open({
+      items: {
+        src: '#configBox'
+      },
+      type: 'inline',
+      removalDelay: 300,
+      mainClass: 'mfp-fade',
+      showCloseBtn:false,
+      // callbacks:{close: function(arg){
+      //   callback(userSelect);
+      // }},
+    }, 0);
+
   }
 
   return {
