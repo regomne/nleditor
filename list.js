@@ -1,5 +1,5 @@
-﻿var GuiNode=require('nw.gui');
-var OutWindow = GuiNode.Window.get();
+﻿var GuiNode=helper.getGUI();
+var OutWindow = helper.getOutWindow();
 
 var CurrentProject;
 
@@ -627,6 +627,7 @@ var App=(function(){
         testSave(function(){OutWindow.close(true)})
       });
 
+
     }
 
     function showModalDialog(text,type,callback)
@@ -877,6 +878,35 @@ var App=(function(){
       }
     }
 
+    function setBackgroundImage(fname,resizeWindow)
+    {
+      if(fname)
+      {
+        var img=$('#bkgnd').show()[0];
+        img.onload=function(){
+          if(resizeWindow)
+          {
+            var xdist=OutWindow.width-document.clientWidth;
+            var ydist=OutWindow.height-document.documentElement.clientHeight;
+            var sc=window.screen;
+            var rw=img.naturalWidth/sc.availWidth;
+            var rh=img.naturalHeight/sc.availHeight;
+            var ratio=rw>rh?rw:rh;
+            console.log(ratio);
+            if(ratio<1)
+              OutWindow.resizeTo(img.naturalWidth+xdist,img.naturalHeight+ydist);
+            else
+              OutWindow.resizeTo(Math.floor(img.naturalWidth/ratio),Math.floor(img.naturalHeight/ratio));
+          }
+        };
+        img.src=helper.getImageSrc(fname);
+      }
+      else
+      {
+        $('#bkgnd').hide();
+      }
+    }
+
     function setWindowTitle(modified)
     {
       if(!CurrentProject || !CurrentProject.fileNames[0])
@@ -897,6 +927,7 @@ var App=(function(){
       setWindowTitle:setWindowTitle,
       testSave:testSave,
       buttonSave:buttonSave,
+      setBackgroundImage:setBackgroundImage,
       init:init,
     };
 })();

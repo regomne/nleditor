@@ -24,7 +24,7 @@ Lang.chn={
   uiSetting_lineFont:'字体：',
   uiSetting_lineFontSize:'字体大小：',
   uiSetting_useBgfile:'是否使用背景图片',
-  uiSetting_bgfile:'背景图片路径：',
+  uiSetting_bgFile:'背景图片路径：',
   uiSetting_autoResizeByImage:'自动根据背景图片调节窗口尺寸',
   uiSetting_bgColor:'背景颜色：',
   uiSetting_editBgColor:'编辑框底色：',
@@ -98,8 +98,8 @@ var configs=(function(){
       },
       {
         type:'file',
-        name:'bgfile',
-        defa:'bkgnd.jpg',
+        name:'bgFile',
+        defa:'./bkgnd.jpg',
       },
       {
         type:'bool',
@@ -297,7 +297,7 @@ var configs=(function(){
       return confs;
     }
 
-    function applySetting(sett)
+    function applySetting(defs,sett)
     {
       if(Editor.isOpenFile() && Editor.isModified())
         Editor.resetAutoSaver(sett.autoSaveInterval);
@@ -323,12 +323,19 @@ var configs=(function(){
 
         if(opt.cssSel)
         {
-          console.log(opt.cssSel,opt.cssKey,sett[opt.name]);
           $(opt.cssSel).css(opt.cssKey,sett[opt.name]);
         }
       }
 
-
+      if(sett.useBgfile)
+      {
+        if(UISettings.bgFile!=sett.bgFile || UISettings.useBgfile==false)
+          App.setBackgroundImage(sett.bgFile,sett.autoResizeByImage);
+      }
+      else
+      {
+        App.setBackgroundImage();
+      }
     }
 
     return {

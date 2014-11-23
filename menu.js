@@ -33,8 +33,8 @@ var Menu=(function(){
       var conf=configs.saveConfigsFromHtml(sets,'setting');
       if(conf)
       {
+        configs.applySetting(sets,conf);
         Settings=conf;
-        configs.applySetting(Settings);
         $.magnificPopup.close();
       }
     });
@@ -76,8 +76,8 @@ var Menu=(function(){
       var conf=configs.saveConfigsFromHtml(sets,'uiSetting');
       if(conf)
       {
-        UISettings=conf;
         configs.applyUiSetting(sets,conf);
+        UISettings=conf;
         $.magnificPopup.close();
       }
     });
