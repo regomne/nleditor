@@ -255,12 +255,12 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
 
 .sp-container {
     border-radius: 0;
-    background-color: #ECECEC;
+    background-color: #fff;
     border: solid 1px #f0c49B;
     padding: 0;
 }
 .sp-container, .sp-container button, .sp-container input, .sp-color, .sp-hue, .sp-clear {
-    font: normal 12px "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+    font: normal 12px "Microsoft Yahei", "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     -ms-box-sizing: border-box;
@@ -327,7 +327,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
     width: 24px;
     height: 15px;
     margin: 3px;
-    cursor: pointer;
+    /*cursor: pointer;*/
     border:solid 2px transparent;
 }
 .sp-palette .sp-thumb-el:hover, .sp-palette .sp-thumb-el.sp-thumb-active {
@@ -365,13 +365,13 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
 .sp-replacer {
     margin:0;
     overflow:hidden;
-    cursor:pointer;
-    padding: 4px;
+    /*cursor:pointer;*/
+    padding: 1px;
     display:inline-block;
     *zoom: 1;
     *display: inline;
     border: solid 1px #91765d;
-    background: #eee;
+    background: #fff;
     color: #333;
     vertical-align: middle;
 }
@@ -386,15 +386,15 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
 }
 .sp-dd {
     padding: 2px 0;
-    height: 16px;
-    line-height: 16px;
+    height: 14px;
+    line-height: 14px;
     float:left;
     font-size:10px;
 }
 .sp-preview {
     position:relative;
     width:25px;
-    height: 20px;
+    height: 16px;
     border: solid 1px #222;
     margin-right: 5px;
     float:left;
@@ -445,7 +445,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
     background-image: linear-gradient(to bottom, #dddddd, #bbbbbb);
     border: 1px solid #bbb;
     border-bottom: 1px solid #999;
-    cursor: pointer;
+    /*cursor: pointer;*/
     text-shadow: 0 1px 0 #ddd;
 }
 .sp-container button:active {

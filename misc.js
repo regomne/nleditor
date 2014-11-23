@@ -92,9 +92,12 @@ var Misc=(function(){
       })
     }
 
-    function chooseFile(name,cb)
+    function chooseFile(name,type,cb)
     {
       var chooser=$(name);
+
+      chooser.attr('accept',type);
+      chooser.val('');
       chooser.off('change').on('change',cb);
       chooser.click();
     }

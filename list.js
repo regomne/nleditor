@@ -88,7 +88,7 @@ var Editor=(function(){
 
   function init()
   {
-    var doc=$('.lines');
+    var doc=$('.listAll');
     doc.on('click','.para',lineClickProc);
     doc.on('blur','.editText',editBlurProc);
     doc.on('keydown','.editText',editKeyPressProc);
@@ -180,7 +180,7 @@ var Editor=(function(){
 
   function scrollToLine(destLine)
   {
-    var ls=$('.lines');
+    var ls=$('.listAll');
     var destTop=destLine[0].offsetTop-window.innerHeight/2+destLine.height();
     // if(ls.scrollTop()<destTop)
     // {
@@ -237,7 +237,7 @@ var Editor=(function(){
 
   function setHtmlLineCount(cnt)
   {
-    var frame=$('.lines')[0];
+    var frame=$('.listAll')[0];
     var childCnt=frame.children.length;
     if(childCnt>cnt)
     {
@@ -259,7 +259,7 @@ var Editor=(function(){
 
   function getHtmlLineCount()
   {
-    return $('.lines')[0].children.length;
+    return $('.listAll')[0].children.length;
   }
 
   function setParaLine(para,group,idx,str)
@@ -284,7 +284,8 @@ var Editor=(function(){
       para.children[i].textContent=str;
       return;
     }
-    var ele=$('<div class="line'+group+'" id="'+getIdFromPos(group,idx)+'">'+Misc.encodeHtml(str)+'</div>')[0];
+    var ele=$(Misc.format('<div class="line{0} lines" id="{1}">{2}</div>',group,getIdFromPos(group,idx),Misc.encodeHtml(str)))[0];
+    // var ele=$('<div class="line'+group+'" id="'+getIdFromPos(group,idx)+'">'+Misc.encodeHtml(str)+'</div>')[0];
     para.insertBefore(ele,before);
   }
 
@@ -388,7 +389,7 @@ var Editor=(function(){
 
   function clearAll()
   {
-    $('.lines')[0].textContent='';
+    $('.listAll')[0].textContent='';
     project=new Project();
     //curHighlightBox=-1;
     undoList=[];
@@ -598,9 +599,9 @@ var App=(function(){
         dragover:noDefault,
       });
 
-      $('.lines')[0].ondrop=function(e){
+      $('.listAll')[0].ondrop=function(e){
         e.preventDefault();
-        if(e.dataTransfer.files.length<0)
+        if(e.dataTransfer.files.length==0)
           return;
         var fname=e.dataTransfer.files[0].path;
         testSave(function()
@@ -793,7 +794,7 @@ var App=(function(){
 
       function choose()
       {
-        Misc.chooseFile('#openFile',function (evt)
+        Misc.chooseFile('#openFile',".txt,.proj",function (evt)
         {
           var fname=this.value;
           if(fname.slice(-4)=='.txt')
@@ -804,7 +805,7 @@ var App=(function(){
           {
             openProj(fname);
           }
-          $(this).val('');
+          //$(this).val('');
         });
       }
     }
@@ -908,11 +909,11 @@ function Init()
   Editor.init();
 
   //设置主div高度
-  $('.lines').css('height',window.innerHeight-20);
+  $('.listAll').css('height',window.innerHeight-20);
   $(window).on('resize',function(){
-    $('.lines').css('height',window.innerHeight-20);
+    $('.listAll').css('height',window.innerHeight-20);
   });
-  
+
 
   App.setWindowTitle();
   CurrentProject=new Project();

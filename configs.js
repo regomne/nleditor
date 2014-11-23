@@ -21,13 +21,20 @@ Lang.chn={
   setting_autoSelectText: '自动选中文本',
   setting_selectPattern: '选中规则：',
 
+  uiSetting_lineFont:'字体：',
+  uiSetting_lineFontSize:'字体大小：',
   uiSetting_useBgfile:'是否使用背景图片',
   uiSetting_bgfile:'背景图片路径：',
   uiSetting_autoResizeByImage:'自动根据背景图片调节窗口尺寸',
-  uiSetting_bgcolor:'背景颜色',
+  uiSetting_bgColor:'背景颜色：',
+  uiSetting_editBgColor:'编辑框底色：',
+  uiSetting_modifiedTextColor:'修改过的文本颜色：',
+  uiSetting_modifiedSavedBgColor:'上次保存后修改过的文本底色：',
 
   menuSettings: '设置',
   menuUiSettings: '视图设置',
+
+  buttonBrowse: '浏览',
 };
 var CurLang=Lang.chn;
 
@@ -71,6 +78,20 @@ var configs=(function(){
 
     var uiSettingsDefines=[
       {
+        type:'string',
+        name:'lineFont',
+        defa:'微软雅黑',
+        cssSel:'.listAll',
+        cssKey:'font-family',
+      },
+      {
+        type:'number',
+        name:'lineFontSize',
+        defa:16,
+        cssSel:'.lines',
+        cssKey:'font-size',
+      },
+      {
         type:'bool',
         name:'useBgfile',
         defa:true,
@@ -87,8 +108,31 @@ var configs=(function(){
       },
       {
         type:'color',
-        name:'bgcolor',
+        name:'bgColor',
         defa:'white',
+        cssSel: 'body',
+        cssKey: 'background-color',
+      },
+      {
+        type:'color',
+        name:'editBgColor',
+        defa:'rgba(255,0,120,0.3)',
+        cssSel:'.editText',
+        cssKey:'background-color',
+      },
+      {
+        type:'color',
+        name:'modifiedTextColor',
+        defa:'rgb(100,10,10)',
+        cssSel:'.modifiedStart',
+        cssKey:'color',
+      },
+      {
+        type:'color',
+        name:'modifiedSavedBgColor',
+        defa:'rgba(150,150,0,0.2)',
+        cssSel:'.modifiedSaved',
+        cssKey:'background-color',
       },
     ];
 
@@ -176,8 +220,17 @@ var configs=(function(){
             Misc.format('<select id={0}InDialog_{1}>',confType,i)+subops+'</select></span></div>';
           optstr+=s;
           break;
+        case 'file':
+          var s=Misc.format('<div class="configWithLabel"><span>{0}<input type="text" id="{1}InDialog_{2}" value="{3}" /><input type="button" class="browseButtonInConfig" id="Button_{1}InDialog_{2}" value="{4}"/></span></div>',getInstructionText(opt.name),confType,i,Misc.encodeHtml(curs[opt.name]),Misc.encodeHtml(CurLang.buttonBrowse));
+          optstr+=s;
+          break;
+        case 'color':
+          var s=Misc.format('<div class="configWithLabel"><span>{0}<input type="text" class="colorPicker" id="{1}InDialog_{2}" value="{3}"/></span></div>',getInstructionText(opt.name),confType,i,Misc.encodeHtml(curs[opt.name]));
+          optstr+=s;
+          break;
         default:
-          throw "unk conf define"+opt.type;
+          console.log('unk type');
+          //throw "unk conf define"+opt.type;
         }
       }
 
@@ -188,15 +241,18 @@ var configs=(function(){
     {
       var confs={};
       var allErr=false;
-      var optHtml=$('.configWithLabel');
       for(var i=0;i<defs.length;i++)
       {
         var opt=defs[i];
-        var ele=$(Misc.format('#{0}InDialog_{1}',confType,i));
+        if(opt.type=='tag')
+          continue;
+        var eleName=Misc.format('#{0}InDialog_{1}',confType,i);
+        var ele=$(eleName);
         if(ele.length==0)
         {
           throw "no element in html: "+i;
         }
+        var parEle=$('.configWithLabel:has("'+eleName+'")');
         var err=false;
         switch(opt.type)
         {
@@ -221,14 +277,20 @@ var configs=(function(){
           }
           catch(e)
           {
-            $(optHtml[i]).addClass('badConfig');
+            parEle.addClass('badConfig');
             err=true;
             allErr=true;
           }
           break;
+        case 'file':
+          confs[opt.name]=ele[0].value;
+          break;
+        case 'color':
+          confs[opt.name]=ele[0].value;
+          break;
         }
         if(!err)
-          $(optHtml[i]).removeClass('badConfig');
+          parEle.removeClass('badConfig');
       }
       if(allErr)
         return null;
@@ -241,8 +303,31 @@ var configs=(function(){
         Editor.resetAutoSaver(sett.autoSaveInterval);
     }
 
-    function applyUiSetting(sett)
+    function applyUiSetting(defs,sett)
     {
+      //apply css settings
+      for(var i=0;i<defs.length;i++)
+      {
+        var opt=defs[i];
+        if(opt.type=='tag')
+          continue;
+        var eleName=Misc.format('#uiSettingInDialog_{0}',i);
+        var ele=$(eleName);
+        if(ele.length==0)
+        {
+          throw "no element in html: "+i;
+        }
+        var parEle=$('.configWithLabel:has("'+eleName+'")');
+        if(parEle.css('display')=='none')
+          continue;
+
+        if(opt.cssSel)
+        {
+          console.log(opt.cssSel,opt.cssKey,sett[opt.name]);
+          $(opt.cssSel).css(opt.cssKey,sett[opt.name]);
+        }
+      }
+
 
     }
 

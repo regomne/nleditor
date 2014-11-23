@@ -52,6 +52,7 @@ var Menu=(function(){
       removalDelay: 300,
       mainClass: 'mfp-fade',
       showCloseBtn:false,
+      closeOnBgClick:false,
       // callbacks:{close: function(arg){
       //   callback(userSelect);
       // }},
@@ -76,7 +77,7 @@ var Menu=(function(){
       if(conf)
       {
         UISettings=conf;
-        configs.applyUiSetting(conf);
+        configs.applyUiSetting(sets,conf);
         $.magnificPopup.close();
       }
     });
@@ -85,7 +86,21 @@ var Menu=(function(){
     });
 
     optsDiv[0].textContent='';
-    optsDiv.append($(configs.generateConfigHtml(sets,Settings,'setting')));
+    optsDiv.append($(configs.generateConfigHtml(sets,UISettings,'uiSetting')));
+    $('.colorPicker').spectrum({
+      showAlpha: true,
+      //showButtons: false,
+      clickoutFiresChange: true,
+      preferredFormat: "rgb",
+      cancelText:CurLang.confirmCancel,
+      chooseText:CurLang.confirmOK,
+    });
+    $('.browseButtonInConfig').off('click').on('click',function(e){
+      var id=this.id.slice(7);
+      Misc.chooseFile('#openFile','',function(){
+        $('#'+id).val(this.value);
+      });
+    })
     $.magnificPopup.open({
       items: {
         src: '#configBox'
@@ -94,6 +109,7 @@ var Menu=(function(){
       removalDelay: 300,
       mainClass: 'mfp-fade',
       showCloseBtn:false,
+      closeOnBgClick:false,
       // callbacks:{close: function(arg){
       //   callback(userSelect);
       // }},
