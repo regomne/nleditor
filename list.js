@@ -162,7 +162,7 @@ var Editor=(function(){
       return;
     function replaceSpace(s)
     {
-      return s.replace('\xa0',' ');
+      return s.replace(/\xa0/g,' ');
     }
     var pos=this.myPos;
     var newStr=replaceSpace(this.value);

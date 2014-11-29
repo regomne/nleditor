@@ -104,7 +104,7 @@ var Misc=(function(){
 
     function genNewScPath(fname)
     {
-      fname=fname.replace('/','\\');
+      fname=fname.replace(/\//g,'\\');
       if(fname.indexOf('\\')==-1)
       {
         return 'NewSc\\'+fname;
