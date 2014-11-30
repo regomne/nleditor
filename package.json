@@ -1,9 +1,1 @@
-{
-	"name":"nledit",
-	"main":"index.html",
-	"window": {
-		"toolbar": false,
-		"width": 800,
-		"height": 600
-	}
-}
+{"name":"Node-Line Editor","main":"index.html","window":{"toolbar":false,"show":false,"height":741,"width":988}}

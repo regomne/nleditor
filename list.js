@@ -637,7 +637,10 @@ var App=(function(){
 
       //全局事件绑定
       OutWindow.on('close',function(){
-        testSave(function(){OutWindow.close(true)})
+        testSave(function(){
+          helper.saveWindowSize();
+          OutWindow.close(true);
+        })
       });
 
 
@@ -908,9 +911,9 @@ var App=(function(){
             var ratiomin=Math.min(rw,rh);
             if(ratio<1)
             {
-              if(ratiomin<0.6)
+              if(ratiomin<0.618)
               {
-                var mulmin=0.6/ratiomin;
+                var mulmin=0.618/ratiomin;
                 var mulmax=1/ratio;
                 var mul;
                 if(mulmin<mulmax)
@@ -932,9 +935,9 @@ var App=(function(){
             }
 
             if(OutWindow.x+OutWindow.width>sc.availWidth)
-              OutWindow.x=sc.availWidth/2 - OutWindow.width/2;
+              OutWindow.x=Math.floor(sc.availWidth/2 - OutWindow.width/2);
             if(OutWindow.y+OutWindow.height>sc.availHeight)
-              OutWindow.y=sc.availHeight/2 - OutWindow.height/2;
+              OutWindow.y=Math.floor(sc.availHeight/2 - OutWindow.height/2);
           }
         };
         img.src=helper.getImageSrc(encodeURI(fname));
@@ -973,6 +976,8 @@ var App=(function(){
 function Init()
 {
   //初始化对象
+  configs.loadConfigs();
+
   App.init();
   Menu.init();
   Editor.init();
@@ -986,5 +991,6 @@ function Init()
 
   App.setWindowTitle();
   CurrentProject=new Project();
+  OutWindow.show();
 }
 

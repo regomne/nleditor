@@ -56,7 +56,7 @@
 
   function throwError(evt,err)
   {
-    comm.emit.apply(this,arguments);
+    comm.emit.apply(comm,arguments);
   }
 
   function parseText(cmd,data,callback)
@@ -167,47 +167,47 @@
     });
   }
 
-  function saveConfig(cmd,data,callback)
+  function saveConfigs(cmd,data,callback)
   {
     var conf=data;
     var fname=cmd.name;
     if(fname===undefined)
     {
-      throwError('s_saveConfig',"no file name",callback);
+      throwError('s_saveConfigs',"no file name",callback);
       return;
     }
     if(typeof(fname)!='string')
     {
-      throwError('s_saveConfig',"file name must be unique",callback);
+      throwError('s_saveConfigs',"file name must be unique",callback);
       return;
     }
     fname=genConfigName(fname);
     mkdirs(path.dirname(fname));
-    var bin=iconv.encode(JSON.stringify(proj),'utf8');
+    var bin=iconv.encode(JSON.stringify(conf),'utf8');
     fs.writeFile(fname,bin,function(err)
     {
       if(err)
       {
-        throwError('s_saveConfig',err.message,callback);
+        throwError('s_saveConfigs',err.message,callback);
         return;
       }
-      comm.emit('s_saveConfig',null,callback);
+      comm.emit('s_saveConfigs',null,callback);
       gLog('config:',fname,'saved');
     });
   }
   
-  function loadConfig(cmd,data,callback)
+  function loadConfigs(cmd,data,callback)
   {
     var fname=genConfigName(data);
     fs.readFile(fname,function(err,data)
     {
       if(err)
       {
-        throwError('s_loadConfig',err.message,null,callback);
+        throwError('s_loadConfigs',err.message,null,callback);
         return;
       }
       var conf=JSON.parse(iconv.decode(data,'utf8'));
-      comm.emit('s_loadConfig',null,conf,callback);
+      comm.emit('s_loadConfigs',null,conf,callback);
       gLog('config:',fname,'loaded');
     });
   }
@@ -227,6 +227,8 @@
       parseProj:parseProj,
       saveText:saveText,
       saveProj:saveProj,
+      saveConfigs:saveConfigs,
+      loadConfigs:loadConfigs,
     };
 
     if(dispTable[cmd['cmd']]!=undefined)

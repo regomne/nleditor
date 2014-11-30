@@ -27,12 +27,12 @@ var comm=(function(){
     cb(err);
   }
 
-  function s_loadConfig(err,conf,cb)
+  function s_loadConfigs(err,conf,cb)
   {
     cb(err,conf);
   }
 
-  function s_saveConfig(err,cb)
+  function s_saveConfigs(err,cb)
   {
     cb(err);
   }
@@ -52,6 +52,8 @@ var comm=(function(){
   ev.on('s_saveText',s_saveText);
   ev.on('s_parseProj',s_parseProj);
   ev.on('s_saveProj',s_saveProj);
+  ev.on('s_saveConfigs',s_saveConfigs);
+  ev.on('s_loadConfigs',s_loadConfigs);
   ev.on('s_error',s_error);
   ev.on('c_sendCmd',c_sendCmd);
 

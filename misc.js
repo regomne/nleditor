@@ -68,6 +68,10 @@
             return copy;
         }
 
+        if(obj instanceof RegExp){
+          return new RegExp(obj);
+        }
+
         // Handle Object
         if (obj instanceof Object) {
             var copy = {};

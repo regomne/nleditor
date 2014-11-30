@@ -149,19 +149,26 @@ var configs=(function(){
       return conf;
     }
 
+    function parseSelectPattern(str)
+    {
+      var pat=str.split('\\0');
+      for(var i=0;i<pat.length;i++)
+      {
+        pat[i]=new RegExp(pat[i]);
+      }
+      return pat;
+    }
+
     function getDefaultSettings()
     {
       var settings=getDefault(settingsDefines);
-      settings.selectPattern=settings.selectPattern.split('\\0');
-      for(var i=0;i<settings.selectPattern.length;i++)
+      try{
+        settings.selectPattern=parseSelectPattern(settings.selectPattern);
+      }
+      catch(e)
       {
-        try{
-          settings.selectPattern[i]=new RegExp(settings.selectPattern[i]);
-        }
-        catch(e)
-        {
-          setTimeout(function(){App.showHint(CurLang.regexpError+'\n'+e.message)},1000);
-        }
+        setTimeout(function(){App.showHint(CurLang.regexpError+'\n'+e.message)},1000);
+        settings.selectPattern=[];
       }
       return settings;
     }
@@ -212,9 +219,12 @@ var configs=(function(){
           break;
         case 'combo':
           var subops='';
+          var curop=curs[opt.name];
           for(var j=0;j<opt.data.length;j++)
           {
-            subops+=Misc.format('<option value="{0}">{1}</option>',Misc.encodeHtml(opt.data[j]),getSubInstructionText(opt.name,j));
+            var opvalue=opt.data[j];
+            subops+=Misc.format('<option value="{0}" {1}>{2}</option>',Misc.encodeHtml(opvalue),
+              opvalue==curop?'selected':'',getSubInstructionText(opt.name,j));
           }
           var s='<div class="configWithLabel"><span>'+getInstructionText(opt.name)+
             Misc.format('<select id={0}InDialog_{1}>',confType,i)+subops+'</select></span></div>';
@@ -269,6 +279,11 @@ var configs=(function(){
           confs[opt.name]=opt.data[ele[0].selectedIndex];
           break;
         case 'patterns':
+          if(!ele[0].value)
+          {
+            confs[opt.name]=[];
+            break;
+          }
           var pat=ele[0].value.split('\\0');
           try{
             confs[opt.name]=pat.map(function(el){
@@ -305,6 +320,7 @@ var configs=(function(){
 
     function applyUiSetting(defs,sett)
     {
+      var isInConfigWindow=false;
       //apply css settings
       for(var i=0;i<defs.length;i++)
       {
@@ -313,13 +329,13 @@ var configs=(function(){
           continue;
         var eleName=Misc.format('#uiSettingInDialog_{0}',i);
         var ele=$(eleName);
-        if(ele.length==0)
+        if(ele.length!=0)
         {
-          throw "no element in html: "+i;
+          isInConfigWindow=true;
+          var parEle=$('.configWithLabel:has("'+eleName+'")');
+          if(parEle.css('display')=='none')
+            continue;
         }
-        var parEle=$('.configWithLabel:has("'+eleName+'")');
-        if(parEle.css('display')=='none')
-          continue;
 
         if(opt.cssSel)
         {
@@ -332,12 +348,51 @@ var configs=(function(){
         if(UISettings.bgFile!=sett.bgFile ||
           UISettings.useBgfile==false ||
           (sett.autoResizeByImage==true && UISettings.autoResizeByImage==false))
-          App.setBackgroundImage(sett.bgFile,sett.autoResizeByImage);
+          App.setBackgroundImage(sett.bgFile,(isInConfigWindow? sett.autoResizeByImage:false));
       }
       else
       {
         App.setBackgroundImage();
       }
+    }
+
+    function saveConfigs()
+    {
+      var tmp={settings:Misc.clone(Settings),uiSettings:UISettings};
+      tmp.settings.selectPattern=Settings.selectPattern.map(function(ele){
+        return ele.toString().slice(1,-1);
+      }).join('\\0');
+      comm.emit('c_sendCmd','cmd=saveConfigs&name=configs.json',tmp,function(err){
+        if(err)
+        {
+          console.log(err);
+          return;
+        }
+      });
+    }
+
+    function loadConfigs()
+    {
+      comm.emit('c_sendCmd','cmd=loadConfigs','configs.json',function(err,tmp){
+        console.log('back');
+        if(err)
+        {
+          console.log(err);
+          return;
+        }
+        try{
+          tmp.settings.selectPattern=parseSelectPattern(tmp.settings.selectPattern);
+        }
+        catch(e)
+        {
+          setTimeout(function(){App.showHint(CurLang.regexpError+'\n'+e.message)},1000);
+          tmp.settings.selectPattern=[];
+        }
+        applySetting(settingsDefines,tmp.settings);
+        applyUiSetting(uiSettingsDefines,tmp.uiSettings);
+        Settings=tmp.settings;
+        UISettings=tmp.uiSettings;
+      });
     }
 
     return {
@@ -349,6 +404,8 @@ var configs=(function(){
       saveConfigsFromHtml:saveConfigsFromHtml,
       applySetting:applySetting,
       applyUiSetting:applyUiSetting,
+      saveConfigs:saveConfigs,
+      loadConfigs:loadConfigs,
     };
 })();
 

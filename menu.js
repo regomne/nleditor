@@ -35,6 +35,7 @@ var Menu=(function(){
       {
         configs.applySetting(sets,conf);
         Settings=conf;
+        configs.saveConfigs();
         $.magnificPopup.close();
       }
     });
@@ -78,6 +79,7 @@ var Menu=(function(){
       {
         configs.applyUiSetting(sets,conf);
         UISettings=conf;
+        configs.saveConfigs();
         $.magnificPopup.close();
       }
     });
