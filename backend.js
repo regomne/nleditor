@@ -1,4 +1,4 @@
-var Backend=(function(){
+﻿var Backend=(function(){
   var fs=require('fs');
   var querystring=require('querystring');
   var path=require('path');
@@ -39,6 +39,10 @@ var Backend=(function(){
     if(fname.slice(-5)=='.proj')
       return fname;
     return fname+'.proj';
+  }
+  function genConfigName(fname)
+  {
+    return fname;
   }
   function mkdirs(dirpath)
   {
@@ -160,6 +164,51 @@ var Backend=(function(){
       }
       comm.emit('s_saveProj',null,callback);
       gLog('proj:',fname,'saved');
+    });
+  }
+
+  function saveConfig(cmd,data,callback)
+  {
+    var conf=data;
+    var fname=cmd.name;
+    if(fname===undefined)
+    {
+      throwError('s_saveConfig',"no file name",callback);
+      return;
+    }
+    if(typeof(fname)!='string')
+    {
+      throwError('s_saveConfig',"file name must be unique",callback);
+      return;
+    }
+    fname=genConfigName(fname);
+    mkdirs(path.dirname(fname));
+    var bin=iconv.encode(JSON.stringify(proj),'utf8');
+    fs.writeFile(fname,bin,function(err)
+    {
+      if(err)
+      {
+        throwError('s_saveConfig',err.message,callback);
+        return;
+      }
+      comm.emit('s_saveConfig',null,callback);
+      gLog('config:',fname,'saved');
+    });
+  }
+  
+  function loadConfig(cmd,data,callback)
+  {
+    var fname=genConfigName(data);
+    fs.readFile(fname,function(err,data)
+    {
+      if(err)
+      {
+        throwError('s_loadConfig',err.message,null,callback);
+        return;
+      }
+      var conf=JSON.parse(iconv.decode(data,'utf8'));
+      comm.emit('s_loadConfig',null,conf,callback);
+      gLog('config:',fname,'loaded');
     });
   }
 

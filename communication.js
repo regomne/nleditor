@@ -1,4 +1,4 @@
-  //nodejs in native:
+﻿  //nodejs in native:
 
 var gLog=function(){console.log.apply(console,arguments)}
 
@@ -23,6 +23,16 @@ var comm=(function(){
   }
 
   function s_saveProj(err,cb)
+  {
+    cb(err);
+  }
+
+  function s_loadConfig(err,conf,cb)
+  {
+    cb(err,conf);
+  }
+
+  function s_saveConfig(err,cb)
   {
     cb(err);
   }

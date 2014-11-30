@@ -1,4 +1,4 @@
-var Misc=(function(){
+﻿var Misc=(function(){
     var REGX_HTML_ENCODE = /"|&|'|<|>|[\x00-\x20]|[\x7F-\xFF]|[\u0100-\u2700]/g;
 
     var REGX_HTML_DECODE = /&\w+;|&#(\d+);/g;

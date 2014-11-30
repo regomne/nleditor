@@ -1,4 +1,4 @@
-var helper=(function(){
+﻿var helper=(function(){
 
 
   if(USE_NODE_WEBKIT){

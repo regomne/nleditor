@@ -84,6 +84,7 @@ var Editor=(function(){
   var project;
   var undoList;
   var modifiedSave;
+  var modifiedStart;
   var autoSaverId;
 
   function init()
@@ -208,7 +209,7 @@ var Editor=(function(){
       }
       return false;
     }
-    else if(e.which==27)
+    else if(e.which==27) //ESC
     {
       var pos=this.myPos;
       this.noModify=true;
@@ -299,17 +300,13 @@ var Editor=(function(){
     return l.textContent;
   }
 
-  function setLineInHtml(group,idx,str,isMod)
+  function setLineInHtml(group,idx,str)
   {
     var l=$('#'+getIdFromPos(group,idx));
     if(l.length==0)
       return false;
     l[0].textContent=str;
     l[0].myIsEditing=false;
-    if(isMod===true)
-      l.addClass('modifiedStart');
-    else if(isMod===false)
-      l.removeClass('modifiedStart');
     return true;
   }
 
@@ -379,7 +376,7 @@ var Editor=(function(){
   function modifyLine(group,idx,str)
   {
     project.lineGroups[group][idx]=str;
-    setLineInHtml(group,idx,str,true);
+    setLineInHtml(group,idx,str);
     App.setWindowTitle(isModified());
     if(autoSaverId==undefined && Settings.autoSaveInterval!=0 && isModified())
     {
@@ -396,6 +393,7 @@ var Editor=(function(){
     undoList.savedIdx=0;
     undoList.curIdx=0;
     modifiedSaved={};
+    modifiedStart={};
     if(autoSaverId!=undefined)
     {
       clearInterval(autoSaverId);
@@ -457,7 +455,7 @@ var Editor=(function(){
 
   function addUndoInfo(group,idx,str)
   {
-    $('#'+getIdFromPos(group,idx)).addClass('modifiedSaved');
+    $('#'+getIdFromPos(group,idx)).addClass('modifiedSaved').addClass('modifiedStart');
 
     if(undoList.curIdx<undoList.length)
       undoList=copyUndoList(undoList);
@@ -467,6 +465,11 @@ var Editor=(function(){
     if(modifiedSaved[idx]==undefined)
       modifiedSaved[idx]=0;
     modifiedSaved[idx]++;
+
+    if(modifiedStart[idx]==undefined)
+      modifiedStart[idx]=0;
+    modifiedStart[idx]++;
+
   }
 
   function undo()
@@ -481,13 +484,17 @@ var Editor=(function(){
     {
       scrollToLine(destLine);
       modifyLine(item.group,item.index,item.string.olds);
-      //switchLineStatus(destLine,'modifiedSaved');
-      console.log(modifiedSaved[item.index]);
       if(modifiedSaved[item.index]==undefined)
         modifiedSaved[item.index]=0;
       modifiedSaved[item.index]--;
       if(modifiedSaved[item.index]==0 || modifiedSaved[item.index]==-1)
         switchLineStatus(destLine,'modifiedSaved');
+
+      modifiedStart[item.index]--;
+      if(modifiedStart[item.index]==0)
+      {
+        destLine.removeClass('modifiedStart');
+      }
     }
   }
 
@@ -508,6 +515,12 @@ var Editor=(function(){
       modifiedSaved[item.index]++;
       if(modifiedSaved[item.index]==0 || modifiedSaved[item.index]==1)
         switchLineStatus(destLine,'modifiedSaved');
+
+      modifiedStart[item.index]++;
+      if(modifiedStart[item.index]==1)
+      {
+        destLine.addClass('modifiedStart');
+      }
     }
   }
 
@@ -886,20 +899,45 @@ var App=(function(){
         img.onload=function(){
           if(resizeWindow)
           {
-            var xdist=OutWindow.width-document.clientWidth;
+            var xdist=OutWindow.width-document.documentElement.clientWidth;
             var ydist=OutWindow.height-document.documentElement.clientHeight;
             var sc=window.screen;
             var rw=img.naturalWidth/sc.availWidth;
             var rh=img.naturalHeight/sc.availHeight;
-            var ratio=rw>rh?rw:rh;
-            console.log(ratio);
+            var ratio=Math.max(rw,rh);
+            var ratiomin=Math.min(rw,rh);
             if(ratio<1)
-              OutWindow.resizeTo(img.naturalWidth+xdist,img.naturalHeight+ydist);
+            {
+              if(ratiomin<0.6)
+              {
+                var mulmin=0.6/ratiomin;
+                var mulmax=1/ratio;
+                var mul;
+                if(mulmin<mulmax)
+                  mul=mulmin;
+                else
+                {
+                  mul=mulmax;
+                  xdist=0;
+                  ydist=0;
+                }
+                OutWindow.resizeTo(Math.floor(img.naturalWidth/(1/mul))+xdist,Math.floor(img.naturalHeight/(1/mul))+ydist);
+              }
+              else
+                OutWindow.resizeTo(img.naturalWidth+xdist,img.naturalHeight+ydist);
+            }
             else
+            {
               OutWindow.resizeTo(Math.floor(img.naturalWidth/ratio),Math.floor(img.naturalHeight/ratio));
+            }
+
+            if(OutWindow.x+OutWindow.width>sc.availWidth)
+              OutWindow.x=sc.availWidth/2 - OutWindow.width/2;
+            if(OutWindow.y+OutWindow.height>sc.availHeight)
+              OutWindow.y=sc.availHeight/2 - OutWindow.height/2;
           }
         };
-        img.src=helper.getImageSrc(fname);
+        img.src=helper.getImageSrc(encodeURI(fname));
       }
       else
       {
@@ -940,9 +978,9 @@ function Init()
   Editor.init();
 
   //设置主div高度
-  $('.listAll').css('height',window.innerHeight-20);
+  $('.listAll').css('height',window.innerHeight);
   $(window).on('resize',function(){
-    $('.listAll').css('height',window.innerHeight-20);
+    $('.listAll').css('height',window.innerHeight);
   });
 
 

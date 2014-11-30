@@ -1,4 +1,4 @@
-
+﻿
 var Lang={};
 Lang.chn={
   confirmSaveFile: '文件已修改，是否保存？',
@@ -329,7 +329,9 @@ var configs=(function(){
 
       if(sett.useBgfile)
       {
-        if(UISettings.bgFile!=sett.bgFile || UISettings.useBgfile==false)
+        if(UISettings.bgFile!=sett.bgFile ||
+          UISettings.useBgfile==false ||
+          (sett.autoResizeByImage==true && UISettings.autoResizeByImage==false))
           App.setBackgroundImage(sett.bgFile,sett.autoResizeByImage);
       }
       else
