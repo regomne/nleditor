@@ -28,6 +28,7 @@ Lang.chn={
   uiSetting_autoResizeByImage:'自动根据背景图片调节窗口尺寸',
   uiSetting_bgColor:'背景颜色：',
   uiSetting_editBgColor:'编辑框底色：',
+  uiSetting_textColor:'正常文本颜色：',
   uiSetting_modifiedTextColor:'修改过的文本颜色：',
   uiSetting_modifiedSavedBgColor:'上次保存后修改过的文本底色：',
 
@@ -119,6 +120,13 @@ var configs=(function(){
         defa:'rgba(255,0,120,0.3)',
         cssSel:'.editText',
         cssKey:'background-color',
+      },
+      {
+        type:'color',
+        name:'textColor',
+        defa:'black',
+        cssSel:'.para',
+        cssKey:'color',
       },
       {
         type:'color',
@@ -374,7 +382,6 @@ var configs=(function(){
     function loadConfigs()
     {
       comm.emit('c_sendCmd','cmd=loadConfigs','configs.json',function(err,tmp){
-        console.log('back');
         if(err)
         {
           console.log(err);
@@ -390,8 +397,8 @@ var configs=(function(){
         }
         applySetting(settingsDefines,tmp.settings);
         applyUiSetting(uiSettingsDefines,tmp.uiSettings);
-        Settings=tmp.settings;
-        UISettings=tmp.uiSettings;
+        Misc.copy(Settings,tmp.settings);
+        Misc.copy(UISettings,tmp.uiSettings);
       });
     }
 

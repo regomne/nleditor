@@ -16,7 +16,8 @@
     var pkg=JSON.parse(fs.readFileSync('package.json'));
     var h=document.documentElement.clientHeight;
     var w=document.documentElement.clientWidth;
-    if(h!=pkg.window.height || w!=pkg.window.width)
+    if((h!=pkg.window.height || w!=pkg.window.width) && 
+      (w>100 && h>100))
     {
       pkg.window.height=Math.floor(h);
       pkg.window.width=Math.floor(w);

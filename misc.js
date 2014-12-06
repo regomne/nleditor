@@ -84,6 +84,14 @@
         throw new Error("Unable to copy obj! Its type isn't supported.");
     }
 
+    function copy(obj1,obj2)
+    {
+      for(var k in obj2)
+      {
+        obj1[k]=obj2[k];
+      }
+    }
+
     function format(str)
     {
       var params=[];
@@ -138,6 +146,7 @@
         encodeHtml: en,
         decodeHtml: de,
         clone:clone,
+        copy:copy,
         format:format,
         genNewScPath:genNewScPath,
         chooseFile:chooseFile,

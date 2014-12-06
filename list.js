@@ -93,7 +93,6 @@ var Editor=(function(){
     doc.on('click','.para',lineClickProc);
     doc.on('blur','.editText',editBlurProc);
     doc.on('keydown','.editText',editKeyPressProc);
-    //doc.on('click','.para',paraClickProc);
 
     clearAll();
   }
@@ -252,7 +251,11 @@ var Editor=(function(){
       //var fr=document.createDocumentFragment();
       for(var i=childCnt;i<cnt;i++)
       {
-        frame.appendChild($('<p class="para" id="para'+i+'"></p>')[0]);
+        var ele=$(Misc.format('<p class="para" id="para{0}"></p>',i));
+        var ele2=$('<div class="lnNumberOut"></div>');
+        ele2.append($(Misc.format('<span class="lnNumber">{0}</span>',i+1)));
+        ele.append(ele2);
+        frame.appendChild(ele[0]);
       }
       //frame.appendChild(fr);
     }
@@ -266,9 +269,11 @@ var Editor=(function(){
   function setParaLine(para,group,idx,str)
   {
     var before=null;
-    for(var i=0;i<para.children.length;i++)
+    var childs=$('.lines',para);
+    //var childs=para.children;
+    for(var i=0;i<childs.length;i++)
     {
-      var tg=getPosFromId(para.children[i].id).group;
+      var tg=getPosFromId(childs[i].id).group;
       if(group==tg)
       {
         before=i;
@@ -276,18 +281,18 @@ var Editor=(function(){
       }
       else if(group<tg)
       {
-        before=para.children[i];
+        before=childs[i];
         break;
       }
     }
     if(typeof(before)=='number')
     {
-      para.children[i].textContent=str;
+      childs[i].textContent=str;
       return;
     }
-    var ele=$(Misc.format('<div class="line{0} lines" id="{1}">{2}</div>',group,getIdFromPos(group,idx),Misc.encodeHtml(str)))[0];
-    // var ele=$('<div class="line'+group+'" id="'+getIdFromPos(group,idx)+'">'+Misc.encodeHtml(str)+'</div>')[0];
-    para.insertBefore(ele,before);
+    var ele=$(Misc.format('<div class="line{0} lines" id="{1}">{2}</div>',group,getIdFromPos(group,idx),Misc.encodeHtml(str)));
+    para.insertBefore(ele[0],before);
+    //ele.insertBefore();
   }
 
   function getLineInHtml(group,idx)
@@ -356,7 +361,10 @@ var Editor=(function(){
   function resetAutoSaver(interval)
   {
     if(autoSaverId!=undefined)
+    {
       clearInterval(autoSaverId);
+      autoSaverId=undefined;
+    }
     if(interval!=0)
     {
       autoSaverId=setInterval(function(){
@@ -411,7 +419,7 @@ var Editor=(function(){
   {
     if(group===undefined)
     {
-      var maxLineCnt=Math.max.apply(null,project.lineGroups.map(function(ls){return ls.length}));
+      var maxLineCnt=Math.max.apply(Math,project.lineGroups.map(function(ls){return ls.length}));
       setHtmlLineCount(maxLineCnt); 
       for(var i=0;i<project.lineGroups.length;i++)
         updateLines(i);
@@ -433,6 +441,24 @@ var Editor=(function(){
     {
       setParaLine(paras[i],group,i,ls[i]);
     }
+
+    // if(group>=$('.lines',paras[0]).length)
+    // {
+    //   for(var i=0;i<ls.length;i++)
+    //   {
+    //     var ele=$(Misc.format('<div class="line{0} lines" id="{1}">{2}</div>',group,getIdFromPos(group,i),Misc.encodeHtml(ls[i])));
+    //     paras[i].appendChild(ele[0]);
+    //   }
+    // }
+    // else
+    // {
+    //   var htmlls=$('.line'+group);
+    //   for(var i=0;i<htmlls.length;i++)
+    //   {
+    //     htmlls[i].textContent=ls[i];
+    //   }
+    // }
+
     console.log('1',getInter());
   }
 

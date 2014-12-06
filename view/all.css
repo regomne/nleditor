@@ -2,7 +2,7 @@
 body
 {
 	margin: 0px;
-	font-family: "Microsoft Yahei";
+	font-family: "Microsoft Yahei","SimHei";
 
 	/*overflow: hidden;*/
 }
@@ -31,11 +31,29 @@ body
   padding-left: 3px;
   padding-right: 3px;
 	transition: height 0.5s;
+  color: black;
 }
+
+.lnNumberOut
+{
+  float:right;
+}
+.lnNumber
+{
+  /*position: absolute;
+  left: 90%;*/
+  cursor: default;
+  z-index: -1;
+  /*font-size: 140%;*/
+  margin-right: 5px;
+  color: rgba(80,80,80,0.8);
+}
+
 .lines
 {
 	margin: 2px;
 	font-size: 16px;
+  z-index: 5;
 	background-color: rgba(255,255,255,0.5);
 	transition: background-color 0.5s linear, height 0.5s;
 }
