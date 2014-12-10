@@ -50,7 +50,7 @@
     if(!exists)
     {
       mkdirs(path.dirname(dirpath));
-      fs.mkdirSync(dirname);
+      fs.mkdirSync(dirpath);
     }
   };
 
