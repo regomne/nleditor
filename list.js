@@ -128,6 +128,32 @@ var Editor=(function(){
     return {start:start,end:end};
   }
 
+  function getLineText(ele)
+  {
+    for(var i=0;i<ele.childNodes.length;i++)
+    {
+      var node=ele.childNodes[i];
+      if(node.nodeName=='#text')
+      {
+        return node.nodeValue;
+      }
+    }
+    return '';
+  }
+  function setLineText(ele,str)
+  {
+    for(var i=0;i<ele.childNodes.length;i++)
+    {
+      var node=ele.childNodes[i];
+      if(node.nodeName=='#text')
+      {
+        node.nodeValue=str;
+        return;
+      }
+    }
+    ele.insertBefore(document.createTextNode(str),ele.childNodes[0]);
+  }
+
   function lineClickProc(e) //"this" is not Editor
   {
     var ele=e.target;
@@ -138,9 +164,10 @@ var Editor=(function(){
       return;
     if(!ele.myIsEditing)
     {
-      var pureText=ele.textContent;
+      //var pureText=ele.textContent;
+      var pureText=getLineText(ele);
       
-      ele.innerHTML='<textarea class="editText">'+ele.innerHTML+'</textarea>';
+      ele.innerHTML='<textarea class="editText">'+Misc.encodeHtml(pureText)+'</textarea>';
 
       $('.editText').flexText();
       var te=$('.editText')[0];
@@ -251,13 +278,18 @@ var Editor=(function(){
       //var fr=document.createDocumentFragment();
       for(var i=childCnt;i<cnt;i++)
       {
-        var ele=$(Misc.format('<p class="para" id="para{0}"></p>',i));
-        var ele2=$('<div class="lnNumberOut"></div>');
-        ele2.append($(Misc.format('<span class="lnNumber">{0}</span>',i+1)));
-        ele.append(ele2);
-        frame.appendChild(ele[0]);
+        var ele=document.createElement('p');
+        ele.className='para';
+        ele.id='para'+i;
+        var ele2=document.createElement('div');
+        ele2.className='lnNumberOut';
+        var ele3=document.createElement('span');
+        ele3.className='lnNumber';
+        ele3.textContent=(i+1).toString();
+        ele2.appendChild(ele3);
+        ele.appendChild(ele2);
+        frame.appendChild(ele);
       }
-      //frame.appendChild(fr);
     }
   }
 
@@ -269,10 +301,12 @@ var Editor=(function(){
   function setParaLine(para,group,idx,str)
   {
     var before=null;
-    var childs=$('.lines',para);
-    //var childs=para.children;
+    //var childs=$('.lines',para);
+    var childs=para.children;
     for(var i=0;i<childs.length;i++)
     {
+      if(!childs[i].classList.contains('lines'))
+        continue;
       var tg=getPosFromId(childs[i].id).group;
       if(group==tg)
       {
@@ -287,11 +321,20 @@ var Editor=(function(){
     }
     if(typeof(before)=='number')
     {
-      childs[i].textContent=str;
+      //childs[i].textContent=str;
+      setLineText(childs[i],str);
       return;
     }
-    var ele=$(Misc.format('<div class="line{0} lines" id="{1}">{2}</div>',group,getIdFromPos(group,idx),Misc.encodeHtml(str)));
-    para.insertBefore(ele[0],before);
+    var ele=document.createElement('div');
+    ele.className='line'+group+' lines';
+    ele.id=getIdFromPos(group,idx);
+    ele.textContent=str;
+    var space=document.createElement('span');
+    space.className='spaceHolder';
+    space.textContent=' ';
+    ele.appendChild(space);
+
+    para.insertBefore(ele,before);
     //ele.insertBefore();
   }
 
@@ -302,7 +345,7 @@ var Editor=(function(){
       return null;
     // if(l.children.length!=0) //assume the children is textarea
     //   return l.children[0].value;
-    return l.textContent;
+    return getLineText(l);
   }
 
   function setLineInHtml(group,idx,str)
@@ -310,8 +353,12 @@ var Editor=(function(){
     var l=$('#'+getIdFromPos(group,idx));
     if(l.length==0)
       return false;
-    l[0].textContent=str;
-    l[0].myIsEditing=false;
+    l=l[0];
+    l.textContent=str;
+    var space=$('<span class="spaceHolder">&nbsp;</span>')[0];
+    l.appendChild(space);
+    //setLineText(l[0],str);
+    l.myIsEditing=false;
     return true;
   }
 
@@ -459,7 +506,7 @@ var Editor=(function(){
     //   }
     // }
 
-    console.log('1',getInter());
+    console.log('2',getInter());
   }
 
   function isModified()
