@@ -2,6 +2,8 @@
 var OutWindow = helper.getOutWindow();
 
 var CurrentProject;
+var TotalModifiedLines=0;
+var ProgramStartTime=new Date();
 
 var Project=function(proj)
 {
@@ -87,6 +89,8 @@ var Editor=(function(){
   var modifiedStart;
   var autoSaverId;
 
+  var projectStartTime;
+
   function init()
   {
     var doc=$('.listAll');
@@ -94,7 +98,7 @@ var Editor=(function(){
     doc.on('blur','.editText',editBlurProc);
     doc.on('keydown','.editText',editKeyPressProc);
 
-    clearAll();
+    closeAll();
   }
 
   function getPosFromId(id)
@@ -331,7 +335,7 @@ var Editor=(function(){
     ele.textContent=str;
     var space=document.createElement('span');
     space.className='spaceHolder';
-    space.textContent=' ';
+    space.textContent='1';
     ele.appendChild(space);
 
     para.insertBefore(ele,before);
@@ -439,8 +443,9 @@ var Editor=(function(){
     }
   }
 
-  function clearAll()
+  function closeAll()
   {
+    TotalModifiedLines+=$('.modifiedStart').length;
     $('.listAll')[0].textContent='';
     project=new Project();
     //curHighlightBox=-1;
@@ -456,9 +461,10 @@ var Editor=(function(){
     }
   }
 
-  function linkProject(proj)
+  function openProject(proj)
   {
     project=new Project(proj);
+    projectStartTime=new Date();
   }
 
 
@@ -604,7 +610,7 @@ var Editor=(function(){
     getGroupAttr:getGroupAttr,
     modifyLine:modifyLine,
 
-    linkProject:linkProject,
+    openProject:openProject,
 
     updateLines:updateLines,
     isModified:isModified,
@@ -615,7 +621,7 @@ var Editor=(function(){
     redo:redo,
 
     init:init,
-    clearAll:clearAll,
+    closeAll:closeAll,
 
     resetAutoSaver:resetAutoSaver,
 
@@ -631,12 +637,12 @@ var App=(function(){
 
     function init()
     {
-      $('#btn_open').on('click',buttonOpen);
-      $('#btn_duplicate').on('click',buttonDuplicate);
-      $('#btn_save').on('click',buttonSave);
-      $('#btn_close').on('click',buttonClose);
-      $('#btn_undo').on('click',Editor.undo);
-      $('#btn_redo').on('click',Editor.redo);
+      $('#menuButtonOpen').on('click',buttonOpen);
+      $('#menuButtonDuplicate').on('click',buttonDuplicate);
+      $('#menuButtonSave').on('click',buttonSave);
+      $('#menuButtonClose').on('click',buttonClose);
+      $('#menuButtonUndo').on('click',Editor.undo);
+      $('#menuButtonRedo').on('click',Editor.redo);
 
       //动画按钮效果
       var doc=$(document);
@@ -690,7 +696,7 @@ var App=(function(){
         if(e.dataTransfer.files.length==0)
           return;
         var fname=e.dataTransfer.files[0].path;
-        testSave(function()
+        testClose(function()
         {
           if(fname.slice(-4)=='.txt')
           {
@@ -710,13 +716,41 @@ var App=(function(){
 
       //全局事件绑定
       OutWindow.on('close',function(){
-        testSave(function(){
+        testClose(function(){
           helper.saveWindowSize();
           OutWindow.close(true);
         })
       });
 
+      //infoBox弹出
+      $('#infoBoxHandle').on('mouseenter',function(e){
+        //console.log('entered');
+        var box=$('#infoBox');
+        //box.css('display','block');
+        box.css({
+          display:'block',
+          left:window.innerWidth-box.width(),
+          top:window.innerHeight-box.height(),
+        });
 
+        // box.animate({
+        //   left:window.innerWidth-box.width(),
+        //   top:window.innerHeight-box.height(),
+        // },'slow');
+      });
+      $('#infoBox').on('mouseleave',function(e){
+        console.log('mouseout!');
+        var box=$(this);
+        // box.animate({
+        //   left:window.innerWidth,
+        //   top:window.innerHeight,
+        // },'slow',function(){box.css('display','none')});
+        box.css({
+          left:window.innerWidth,
+          top:window.innerHeight,
+        });
+        setTimeout(function(){box.css('display','none')},500);
+      });
     }
 
     function showModalDialog(text,type,callback)
@@ -787,7 +821,7 @@ var App=(function(){
       },4000);
     }
 
-    function testSave(cb)
+    function testClose(cb)
     {
       if(Editor.isModified())
       {
@@ -799,12 +833,15 @@ var App=(function(){
             buttonSave(cb);
           }
           else
-          
+          {
             cb();
+          }
         });
       }
       else
+      {
         cb();
+      }
     }
 
     function openTxt(fname)
@@ -817,9 +854,9 @@ var App=(function(){
           showHint(err);
           return;
         }
-        Editor.clearAll();
+        Editor.closeAll();
         var proj=CurrentProject=new Project();
-        Editor.linkProject(proj);
+        Editor.openProject(proj);
         proj.addGroup(fname,ls,codec,{});
 
         if(Settings.useNewsc=='ifexists' ||
@@ -871,8 +908,8 @@ var App=(function(){
           return;
         }
         proj=CurrentProject=new Project(proj);
-        Editor.clearAll();
-        Editor.linkProject(proj);
+        Editor.closeAll();
+        Editor.openProject(proj);
         Editor.updateLines();
         setWindowTitle(false);
       });
@@ -880,7 +917,7 @@ var App=(function(){
 
     function buttonOpen()
     {
-      testSave(choose);
+      testClose(choose);
 
       function choose()
       {
@@ -949,9 +986,6 @@ var App=(function(){
             }
           }
         });
-
-
-
       }
     }
 
@@ -959,8 +993,8 @@ var App=(function(){
     {
       if(Editor.isOpenFile())
       {
-        testSave(function(){
-          Editor.clearAll();
+        testClose(function(){
+          Editor.closeAll();
           CurrentProject=new Project();
           setWindowTitle(false);
         });
@@ -1039,7 +1073,7 @@ var App=(function(){
       showHint:showHint,
       windowTitle:windowTitle,
       setWindowTitle:setWindowTitle,
-      testSave:testSave,
+      testClose:testClose,
       buttonSave:buttonSave,
       setBackgroundImage:setBackgroundImage,
       init:init,
@@ -1054,11 +1088,14 @@ function Init()
   App.init();
   Menu.init();
   Editor.init();
+  Lang.init(CurLang);
 
   //设置主div高度
   $('.listAll').css('height',window.innerHeight);
+  $('#infoBox').css({left:window.innerWidth,top:window.innerHeight});
   $(window).on('resize',function(){
     $('.listAll').css('height',window.innerHeight);
+    $('#infoBox').css({left:window.innerWidth,top:window.innerHeight});
   });
 
 

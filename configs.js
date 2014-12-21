@@ -1,42 +1,62 @@
 ﻿
-var Lang={};
-Lang.chn={
-  confirmSaveFile: '文件已修改，是否保存？',
-  confirmYes: '是',
-  confirmNo: '否',
-  confirmOK:'确定',
-  confirmCancel:'取消',
+var Lang=(function(){
+  var L={};
+  L.chn={
+    confirmSaveFile: '文件已修改，是否保存？',
+    confirmYes: '是',
+    confirmNo: '否',
+    confirmOK:'确定',
+    confirmCancel:'取消',
 
-  fileSaved:'{0} 已保存',
+    fileSaved:'{0} 已保存',
 
-  regexpError: '正则表达式语法错误：',
+    regexpError: '正则表达式语法错误：',
 
-  setting_autoSaveInterval: '自动保存间隔(单位秒，0为不自动)：',
-  setting_autoDuplicateGroup: '自动复制原文文本',
-  setting_defaultOpenCodec: '文本默认打开编码：',
-  setting_useNewsc: '是否使用NewSc目录：',
-  setting_useNewsc_0: '如果存在',
-  setting_useNewsc_1: '总是使用',
-  setting_useNewsc_2: '不使用',
-  setting_autoSelectText: '自动选中文本',
-  setting_selectPattern: '选中规则：',
+    setting_autoSaveInterval: '自动保存间隔(单位秒，0为不自动)：',
+    setting_autoDuplicateGroup: '自动复制原文文本',
+    setting_defaultOpenCodec: '文本默认打开编码：',
+    setting_useNewsc: '是否使用NewSc目录：',
+    setting_useNewsc_0: '如果存在',
+    setting_useNewsc_1: '总是使用',
+    setting_useNewsc_2: '不使用',
+    setting_autoSelectText: '自动选中文本',
+    setting_selectPattern: '选中规则：',
 
-  uiSetting_lineFont:'字体：',
-  uiSetting_lineFontSize:'字体大小：',
-  uiSetting_useBgfile:'是否使用背景图片',
-  uiSetting_bgFile:'背景图片路径：',
-  uiSetting_autoResizeByImage:'自动根据背景图片调节窗口尺寸',
-  uiSetting_bgColor:'背景颜色：',
-  uiSetting_editBgColor:'编辑框底色：',
-  uiSetting_textColor:'正常文本颜色：',
-  uiSetting_modifiedTextColor:'修改过的文本颜色：',
-  uiSetting_modifiedSavedBgColor:'上次保存后修改过的文本底色：',
+    uiSetting_lineFont:'字体：',
+    uiSetting_lineFontSize:'字体大小：',
+    uiSetting_useBgfile:'是否使用背景图片',
+    uiSetting_bgFile:'背景图片路径：',
+    uiSetting_autoResizeByImage:'自动根据背景图片调节窗口尺寸',
+    uiSetting_bgColor:'背景颜色：',
+    uiSetting_editBgColor:'编辑框底色：',
+    uiSetting_textColor:'正常文本颜色：',
+    uiSetting_modifiedTextColor:'修改过的文本颜色：',
+    uiSetting_modifiedSavedBgColor:'上次保存后修改过的文本底色：',
 
-  menuSettings: '设置',
-  menuUiSettings: '视图设置',
+    menuSettings: '设置',
+    menuUiSettings: '视图设置',
 
-  buttonBrowse: '浏览',
-};
+    buttonBrowse: '浏览',
+
+    buttonTitleOpen: '打开文件/工程',
+    buttonTitleSave: '保存文件/工程',
+    buttonTitleDuplicate: '复制文本',
+    buttonTitleClose: '关闭工程',
+    buttonTitleUndo: '撤销',
+    buttonTitleRedo: '重做',
+  };
+  L.init=function(curlang){
+    var btns=$('.menuButton');
+    for(var i=0;i<btns.length;i++)
+    {
+      var name=btns[i].id.slice(10);
+      var tt=curlang['buttonTitle'+name];
+      if(tt)
+        $('#menuButton'+name).attr('title',tt);
+    }
+  };
+  return L;
+})();
 var CurLang=Lang.chn;
 
 var configs=(function(){

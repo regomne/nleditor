@@ -13,12 +13,12 @@
 
     <!-- 菜单 -->
     <div class="menuButtonGroup">
-      <div class="menuButton" id="btn_open">O</div>
-      <div class="menuButton" id="btn_duplicate">D</div>
-      <div class="menuButton" id="btn_save">S</div>
-      <div class="menuButton" id="btn_close">C</div>
-      <div class="menuButton" id="btn_undo">U</div>
-      <div class="menuButton" id="btn_redo">R</div>
+      <div class="menuButton" id="menuButtonOpen">O</div>
+      <div class="menuButton" id="menuButtonDuplicate">D</div>
+      <div class="menuButton" id="menuButtonSave">S</div>
+      <div class="menuButton" id="menuButtonClose">C</div>
+      <div class="menuButton" id="menuButtonUndo">U</div>
+      <div class="menuButton" id="menuButtonRedo">R</div>
     </div>
 
     <!--打开文件对话框用-->
@@ -45,9 +45,15 @@
     </div>
     
     <!-- 统计信息提示框 -->
-    <div id="infoBox" class="infoBox"><div class="infoBoxContent">
-        
-    </div></div>
+    <div id="infoBox" class="infoBox">
+    <div class="infoBoxContent">
+        <div class="infoBoxItem"><span id="infoTimeElapsedRun">总时间:200小时</span></div>
+        <div class="infoBoxItem"><span id="infoModifiedRun">修改过的行：100</span></div>
+        <div class="infoBoxItem"><span id="infoTimeElapsedStart">本文件编辑时间：10小时</span></div>
+        <div class="infoBoxItem"><span id="infoModifiedStart">修改过的行：10</span></div>
+    </div>
+    </div>
+    <div id="infoBoxHandle" class="infoBoxHandle">＜</div>
     
     <script type="text/javascript">var USE_NODE_WEBKIT=true;</script>
     <script src="./lib/jquery-2.1.1.js"></script>
