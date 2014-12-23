@@ -625,6 +625,8 @@ var Editor=(function(){
 
     resetAutoSaver:resetAutoSaver,
 
+    getProjectStartTime:function(){return projectStartTime},
+
     //debug
     getUndoList:function(){return undoList},
     getModSaved:function(){return modifiedSaved},
@@ -633,7 +635,7 @@ var Editor=(function(){
 
 var App=(function(){
 
-    var windowTitle="Node-Line Editor";
+    var windowTitle="Node-Line Editor v0.1.1";
 
     function init()
     {
@@ -725,6 +727,7 @@ var App=(function(){
       //infoBox弹出
       $('#infoBoxHandle').on('mouseenter',function(e){
         //console.log('entered');
+        setInfoBoxText();
         var box=$('#infoBox');
         //box.css('display','block');
         box.css({
@@ -733,24 +736,43 @@ var App=(function(){
           top:window.innerHeight-box.height(),
         });
 
-        // box.animate({
-        //   left:window.innerWidth-box.width(),
-        //   top:window.innerHeight-box.height(),
-        // },'slow');
+        if(box[0].timer)
+        {
+          clearInterval(box[0].timer);
+          delete box[0].timer;
+        }
+        box[0].timer=setInterval(setInfoBoxText,1000);
       });
       $('#infoBox').on('mouseleave',function(e){
-        console.log('mouseout!');
         var box=$(this);
-        // box.animate({
-        //   left:window.innerWidth,
-        //   top:window.innerHeight,
-        // },'slow',function(){box.css('display','none')});
         box.css({
           left:window.innerWidth,
           top:window.innerHeight,
         });
         setTimeout(function(){box.css('display','none')},500);
+        clearInterval(box[0].timer);
+        delete box[0].timer;
       });
+    }
+
+    function setInfoBoxText()
+    {
+      var now=new Date();
+      var dist=new Date(now-ProgramStartTime);
+      $('#infoBoxTimeElapsedRun').html(Misc.format(CurLang.infoBoxTimeElapsedRun,dist.getUTCHours(),dist.getUTCMinutes(),dist.getUTCSeconds()));
+      var curModified=$('.modifiedStart').length;
+      $('#infoBoxModifiedRun').html(Misc.format(CurLang.infoBoxModifiedRun,TotalModifiedLines+curModified));
+
+      var timeText='';
+      var lineText='';
+      if(Editor.isOpenFile())
+      {
+        dist=new Date(now-Editor.getProjectStartTime());
+        timeText=Misc.format(CurLang.infoBoxTimeElapsedStart,dist.getUTCHours(),dist.getUTCMinutes(),dist.getUTCSeconds());
+        lineText=Misc.format(CurLang.infoBoxModifiedStart,curModified);
+      }
+      $('#infoBoxTimeElapsedStart').html(timeText);
+      $('#infoBoxModifiedStart').html(lineText);
     }
 
     function showModalDialog(text,type,callback)

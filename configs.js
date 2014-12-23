@@ -44,6 +44,11 @@ var Lang=(function(){
     buttonTitleClose: '关闭工程',
     buttonTitleUndo: '撤销',
     buttonTitleRedo: '重做',
+
+    infoBoxTimeElapsedRun:'您已经打开编辑器&nbsp;<b>{0}小时{1}分{2}秒</b>',
+    infoBoxModifiedRun:'本次打开编辑器一共修改了&nbsp;<b>{0}</b>&nbsp;行',
+    infoBoxTimeElapsedStart:'您已经编辑此文件&nbsp;<b>{0}小时{1}分{2}秒</b>',
+    infoBoxModifiedStart:'本文件一共修改了&nbsp;<b>{0}</b>&nbsp;行',
   };
   L.init=function(curlang){
     var btns=$('.menuButton');
