@@ -64,11 +64,10 @@ body
 	transition: background-color 0.5s linear, height 0.5s;
 }
 
-.lines:hover
+/*.lines:hover
 {
 	background-color: rgba(0,64,255,0.3);
-	/*color: black;*/
-}
+}*/
 
 .spaceHolder
 {

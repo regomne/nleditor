@@ -646,13 +646,19 @@ var App=(function(){
       $('#menuButtonUndo').on('click',Editor.undo);
       $('#menuButtonRedo').on('click',Editor.redo);
 
-      //动画按钮效果
+      //动画效果
       var doc=$(document);
       doc.on('mousedown','.animButton',function(){
         $(this).css('font-size','95%');
       });
       doc.on('mouseup','.animButton',function(){
         $(this).css('font-size','');
+      });
+      doc.on('mouseenter','.lines',function(){
+        $(this).css('background-color',UISettings.lineBgNewColor);
+      });
+      doc.on('mouseleave','.lines',function(){
+        $(this).css('background-color',UISettings.lineBgColor);
       });
 
       //全局按键绑定

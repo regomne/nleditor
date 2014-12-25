@@ -28,6 +28,8 @@ var Lang=(function(){
     uiSetting_bgFile:'背景图片路径：',
     uiSetting_autoResizeByImage:'自动根据背景图片调节窗口尺寸',
     uiSetting_bgColor:'背景颜色：',
+    uiSetting_lineBgColor:'文本行背景色：',
+    uiSetting_lineBgNewColor:'文本行变化背景色：',
     uiSetting_editBgColor:'编辑框底色：',
     uiSetting_textColor:'正常文本颜色：',
     uiSetting_modifiedTextColor:'修改过的文本颜色：',
@@ -138,6 +140,18 @@ var configs=(function(){
         defa:'white',
         cssSel: 'body',
         cssKey: 'background-color',
+      },
+      {
+        type:'color',
+        name:'lineBgColor',
+        defa:'rgba(255,255,255,0.5)',
+        cssSel:'.lines',
+        cssKey:'background-color',
+      },
+      {
+        type:'color',
+        name:'lineBgNewColor',
+        defa:'rgba(0,64,255,0.3)',
       },
       {
         type:'color',
@@ -382,6 +396,8 @@ var configs=(function(){
           UISettings.useBgfile==false ||
           (sett.autoResizeByImage==true && UISettings.autoResizeByImage==false))
           App.setBackgroundImage(sett.bgFile,(isInConfigWindow? sett.autoResizeByImage:false));
+        else if(sett.bgFile=='./bkgnd.jpg')
+          App.setBackgroundImage(sett.bgFile,false);
       }
       else
       {
