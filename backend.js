@@ -8,24 +8,59 @@
   //private:
   function splitTxtFile(data,codec)
   {
+    var beginc=0;
     if(codec===undefined)
     {
       if(data[0]==0xfe && data[1]==0xff)
+      {
         codec='utf16be';
+        beginc=2;
+      }
       else if(data[0]==0xff && data[1]==0xfe)
+      {
         codec='utf16le';
+        beginc=2;
+      }
       else if(data[0]==0xef && data[1]==0xbb && data[2]==0xbf)
+      {
         codec='utf8';
+        beginc=3;
+      }
       else
         codec='utf8';
     }
 
-    var str=iconv.decode(data,codec);
+    var str=iconv.decode(data.slice(beginc),codec);
     var lines=str.split('\r\n');
     return {
       lines:lines,
       codec:codec,
     };
+  }
+
+  function joinTxtFile(lines,codec)
+  {
+    var bin=iconv.encode(lines.join('\r\n'),codec);
+    var nb=bin;
+    if(codec=='utf16le')
+    {
+      nb=new Buffer(bin.length+2);
+      nb.write('\xff\xfe',0,2,'ascii');
+      bin.copy(nb,2);
+    }
+    else if(codec=='utf16be')
+    {
+      nb=new Buffer(bin.length+2);
+      nb.write('\xfe\xff',0,2,'ascii');
+      bin.copy(nb,2);
+    }
+    else if(codec=='utf8')
+    {
+      nb=new Buffer(bin.length+3);
+      nb.write('\xef\xbb\xbf',0,3,'ascii');
+      bin.copy(nb,3);
+    }
+    return nb;
   }
 
   function genTextName(fname)
@@ -107,7 +142,7 @@
     if(!codec)
       codec='utf8';
 
-    var bin=iconv.encode(ls.join('\r\n'),codec);
+    var bin=joinTxtFile(ls,codec);
     mkdirs(path.dirname(fname));
     fs.writeFile(fname,bin,function(err)
     {
