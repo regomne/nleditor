@@ -11,6 +11,12 @@ var Menu=(function(){
     menu1.append(new mni({label:CurLang.menuUiSettings,click:mnUiSettings}));
     $('body').off('contextmenu').on('contextmenu',function(ev){
       //console.dir(ev);
+      // var sel=document.getSelection();
+      // var rg=sel.getRangeAt(0);
+      // if(!rg.collapsed)
+      // {
+      //   console.log(sel.toString());
+      // }
       menu1.popup(ev.clientX,ev.clientY);
       return false;
     });
