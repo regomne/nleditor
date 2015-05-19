@@ -116,15 +116,15 @@
 
     function genNewScPath(fname)
     {
-      fname=fname.replace(/\//g,'\\');
-      if(fname.indexOf('\\')==-1)
+      fname=fname.replace(/\\/g,'/');
+      if(fname.indexOf('/')==-1)
       {
-        return 'NewSc\\'+fname;
+        return 'NewSc/'+fname;
       }
 
-      var eles=fname.split('\\');
-      var path=eles.slice(0,-1).join('\\');
-      return path+'\\NewSc\\'+eles[eles.length-1];
+      var eles=fname.split('/');
+      var path=eles.slice(0,-1).join('/');
+      return path+'/NewSc/'+eles[eles.length-1];
     }
 
     function genProjName(fname)
