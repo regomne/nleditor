@@ -142,6 +142,11 @@
       return fs.existsSync(fname);
     }
 
+    function getExeFolder()
+    {
+      return __dirname;
+    }
+
     return {
         encodeHtml: en,
         decodeHtml: de,
@@ -152,6 +157,7 @@
         chooseFile:chooseFile,
         existsFile:existsFile,
         genProjName:genProjName,
+        getExeFolder:getExeFolder,
     };
 
 })();
